@@ -33,7 +33,7 @@ description: Use when a Ruyi implementation result needs frontend validation, fa
 4. 选择项目已有验证方式。
 5. UI 相关需求优先尝试 fast-browser case/flow/site。
 6. 执行验证命令、UI 自动化或手工验证步骤。
-7. 按 `../../references/test-schema.md` 记录验证证据、失败项、风险和未覆盖项。
+7. 按 `../references/test-schema.md` 记录验证证据、失败项、风险和未覆盖项。
 8. 验证失败时返回 implement、plan 或 contract。
 9. 验证通过后，允许进入 `ruyi-explain`。
 
@@ -59,7 +59,7 @@ description: Use when a Ruyi implementation result needs frontend validation, fa
 验证执行完成后，可以使用脚本生成正式 `test` 文件：
 
 ```bash
-python skills/ruyi-test/scripts/test_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --result <passed|passed-with-notes|failed> --method <method> --ui-automation <item> --evidence <evidence> --acceptance-result <result> --conclusion <conclusion>
+python <skills-dir>/ruyi-test/scripts/test_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --result <passed|passed-with-notes|failed> --method <method> --ui-automation <item> --evidence <evidence> --acceptance-result <result> --conclusion <conclusion>
 ```
 
 脚本职责：
@@ -75,11 +75,11 @@ python skills/ruyi-test/scripts/test_create.py --project <project> --module <mod
 
 ## 7. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/contract-schema.md`
-- `../../references/plan-schema.md`
-- `../../references/test-schema.md`
-- `../../references/explain-schema.md`
+- `../references/main-flow.md`
+- `../references/contract-schema.md`
+- `../references/plan-schema.md`
+- `../references/test-schema.md`
+- `../references/explain-schema.md`
 - `../using-ruyi/references/engineering-discipline.md`
 - `references/verification-discipline.md`
 - `references/fast-browser-testing.md`

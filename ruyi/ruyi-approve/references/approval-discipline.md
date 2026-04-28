@@ -34,7 +34,7 @@ approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接�
 1. 读取 explain。
 2. 确认对应 contract、plan 和 test。
 3. 读取验证摘要和风险项。
-4. 按 `../../../references/approval-schema.md` 记录审批结论。
+4. 按 `../../references/approval-schema.md` 记录审批结论。
 5. 如果未通过，明确返回阶段。
 6. 如果通过，进入 spec-evolve 判断。
 

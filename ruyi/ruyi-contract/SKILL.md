@@ -33,7 +33,7 @@ description: Use when a frontend change needs a business contract for a new feat
 ## 4. 执行步骤
 
 1. 检查项目是否已初始化。
-2. 读取 `../../references/contract-schema.md`。
+2. 读取 `../references/contract-schema.md`。
 3. 读取 `references/contract-discipline.md`。
 4. 如果是修复类需求，先读取并执行 `references/debugging-discipline.md`。
 5. 判断模块和功能命名，优先贴近项目现有模块目录。
@@ -84,13 +84,13 @@ python scripts/contract_create.py `
 contracts/<module>/<feature>/<YYYY-MM-DD>.md
 ```
 
-正文结构遵守 `../../references/contract-schema.md`。
+正文结构遵守 `../references/contract-schema.md`。
 
 ## 7. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/contract-schema.md`
-- `../../references/spec-schema.md`
+- `../references/main-flow.md`
+- `../references/contract-schema.md`
+- `../references/spec-schema.md`
 - `../using-ruyi/references/engineering-discipline.md`
 - `references/contract-discipline.md`
 - `references/debugging-discipline.md`

@@ -21,7 +21,7 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 
 ## 3. 执行步骤
 
-1. 读取 `../../references/spec-merge-protocol.md`。
+1. 读取 `../references/spec-merge-protocol.md`。
 2. 使用 `merge_list.py` 列出 pending candidates。
 3. 使用 `merge_diff.py` 预览候选会如何影响目标 spec。
 4. 用户确认后，使用 `merge_apply.py` 合入或拒绝。
@@ -30,15 +30,15 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 ## 4. 脚本调用
 
 ```bash
-python skills/ruyi-spec-merge/scripts/merge_list.py --project <project>
-python skills/ruyi-spec-merge/scripts/merge_diff.py --project <project> --candidate <path>
-python skills/ruyi-spec-merge/scripts/merge_apply.py --project <project> --candidate <path> --decision <merged|rejected> --reason <reason>
+python <skills-dir>/ruyi-spec-merge/scripts/merge_list.py --project <project>
+python <skills-dir>/ruyi-spec-merge/scripts/merge_diff.py --project <project> --candidate <path>
+python <skills-dir>/ruyi-spec-merge/scripts/merge_apply.py --project <project> --candidate <path> --decision <merged|rejected> --reason <reason>
 ```
 
 脚本只处理 Markdown 协议文件，不判断业务正确性。
 
 ## 5. 必读参考
 
-- `../../references/spec-candidate-schema.md`
-- `../../references/spec-merge-protocol.md`
+- `../references/spec-candidate-schema.md`
+- `../references/spec-merge-protocol.md`
 - `../ruyi-spec-evolve/references/spec-evolution-discipline.md`

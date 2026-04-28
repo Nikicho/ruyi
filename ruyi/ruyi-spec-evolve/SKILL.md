@@ -49,7 +49,7 @@ description: Use when completed Ruyi work should be distilled into project spec 
 确认 explain 已审批通过，并且确实有可复用内容后，可以使用脚本生成候选：
 
 ```bash
-python skills/ruyi-spec-evolve/scripts/candidate_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --target-layer <project|team> --target-spec <spec-file> --proposal <item> --evidence <item> --scope <item>
+python <skills-dir>/ruyi-spec-evolve/scripts/candidate_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --target-layer <project|team> --target-spec <spec-file> --proposal <item> --evidence <item> --scope <item>
 ```
 
 脚本职责：
@@ -62,8 +62,8 @@ python skills/ruyi-spec-evolve/scripts/candidate_create.py --project <project> -
 
 ## 7. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/knowledge-evolution.md`
-- `../../references/spec-schema.md`
-- `../../references/spec-candidate-schema.md`
+- `../references/main-flow.md`
+- `../references/knowledge-evolution.md`
+- `../references/spec-schema.md`
+- `../references/spec-candidate-schema.md`
 - `references/spec-evolution-discipline.md`

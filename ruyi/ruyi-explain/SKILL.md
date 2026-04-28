@@ -36,7 +36,7 @@ description: Use when a completed Ruyi contract needs a PM-facing development br
 6. 读取 `references/explain-discipline.md`。
 7. 对照验收标准整理交付结果。
 8. 写出影响范围、验证摘要、代码质量简报、风险和未覆盖项。
-9. 按 `../../references/explain-schema.md` 生成 explain。
+9. 按 `../references/explain-schema.md` 生成 explain。
 10. 不写审批结论，等待 `ruyi-approve`。
 
 ## 5. 产物要求
@@ -47,14 +47,14 @@ description: Use when a completed Ruyi contract needs a PM-facing development br
 explain/<module>/<feature>/<contract-date>.md
 ```
 
-正文结构遵守 `../../references/explain-schema.md`。
+正文结构遵守 `../references/explain-schema.md`。
 
 ## 6. 脚本调用
 
 确认 contract、plan 和通过的 test 都存在后，可以使用脚本生成正式 explain：
 
 ```bash
-python skills/ruyi-explain/scripts/explain_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --completed <item> --requirement-result <item> --verification <item> --code-quality <item>
+python <skills-dir>/ruyi-explain/scripts/explain_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --completed <item> --requirement-result <item> --verification <item> --code-quality <item>
 ```
 
 脚本职责：
@@ -73,16 +73,16 @@ python skills/ruyi-explain/scripts/explain_create.py --project <project> --modul
 审批前可使用 lint 脚本检查 explain 是否越界引用 test 中不存在的风险：
 
 ```bash
-python skills/ruyi-explain/scripts/explain_lint.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD>
+python <skills-dir>/ruyi-explain/scripts/explain_lint.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD>
 ```
 
 lint 失败时，返回 `ruyi-test` 补证据，或把风险明确标记为待确认。
 
 ## 7. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/contract-schema.md`
-- `../../references/plan-schema.md`
-- `../../references/test-schema.md`
-- `../../references/explain-schema.md`
+- `../references/main-flow.md`
+- `../references/contract-schema.md`
+- `../references/plan-schema.md`
+- `../references/test-schema.md`
+- `../references/explain-schema.md`
 - `references/explain-discipline.md`

@@ -44,7 +44,7 @@ description: Use when a Ruyi development brief needs PM approval, rejection, con
 确认 explain 已经生成，并且用户已经给出明确审批意见后，可以使用脚本记录审批结论：
 
 ```bash
-python skills/ruyi-approve/scripts/approve_update.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --status <approved|changes-requested|conditionally-approved|rejected> --reason <reason>
+python <skills-dir>/ruyi-approve/scripts/approve_update.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --status <approved|changes-requested|conditionally-approved|rejected> --reason <reason>
 ```
 
 非 `approved` 状态必须追加：
@@ -69,8 +69,8 @@ python skills/ruyi-approve/scripts/approve_update.py --project <project> --modul
 
 ## 7. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/explain-schema.md`
-- `../../references/approval-schema.md`
-- `../../references/knowledge-evolution.md`
+- `../references/main-flow.md`
+- `../references/explain-schema.md`
+- `../references/approval-schema.md`
+- `../references/knowledge-evolution.md`
 - `references/approval-discipline.md`

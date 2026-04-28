@@ -31,20 +31,25 @@ Ruyi 是一个面向前端项目的 AI 协作开发框架，以 code agent skill
 ## Skill 结构
 
 ```text
-skills/
-├── using-ruyi
-├── ruyi-init
-├── ruyi-contract
-├── ruyi-plan
-├── ruyi-implement
-├── ruyi-test
-├── ruyi-explain
-├── ruyi-approve
-├── ruyi-spec-evolve
-└── ruyi-spec-merge
+assets/
+└── ruyi-home.png
+ruyi/
+├── using-ruyi/
+├── ruyi-init/
+├── ruyi-contract/
+├── ruyi-plan/
+├── ruyi-implement/
+├── ruyi-test/
+├── ruyi-explain/
+├── ruyi-approve/
+├── ruyi-spec-evolve/
+├── ruyi-spec-merge/
+└── references/
 ```
 
 `using-ruyi` 是入口 skill。其他 skill 只负责各自阶段。
+
+安装时把 `ruyi/` 文件夹里的内容放到目标 code agent 的 skills 目录即可。`references/` 不是独立 skill，而是 Ruyi 各阶段共用的协议和 schema。
 
 ## 主流程
 
@@ -93,7 +98,7 @@ Ruyi 固定主流程：
 
 ## 使用方式
 
-把 `skills/` 目录链接到目标 code agent 可用的 skills 目录后，在项目中对 agent 说自然语言目标即可，例如：
+把 `ruyi/` 文件夹里的内容复制或链接到目标 code agent 可用的 skills 目录后，在项目中对 agent 说自然语言目标即可，例如：
 
 - “把这个 Vue 项目接入 Ruyi。”
 - “新增订单关键词搜索。”
@@ -106,18 +111,23 @@ agent 应先加载 `using-ruyi`，再根据项目状态和用户意图路由到�
 
 ## 安装
 
-Ruyi 仿照 Superpowers 的安装思路：保留完整 Ruyi 目录，只把 `skills/` 目录链接到目标 code agent 可发现的 skills 目录。
+Ruyi 仿照 Superpowers 的安装思路：保留完整仓库目录，把 `ruyi/` 文件夹里的内容放到目标 code agent 可发现的 skills 目录。
 
-本地开发安装：
+复制安装：
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
-cmd /c mklink /J "$env:USERPROFILE\.agents\skills\ruyi" "D:\AIWorks\ruyi\skills"
+Copy-Item -Recurse -Force ".\ruyi\*" "$env:USERPROFILE\.agents\skills\"
 ```
 
-安装后重启 code agent。
+本地开发时也可以分别建立目录联接，避免复制后忘记同步：
 
-详细说明见 [docs/install.md](docs/install.md)。
+```powershell
+cmd /c mklink /J "%USERPROFILE%\.agents\skills\using-ruyi" "D:\AIWorks\ruyi\ruyi\using-ruyi"
+cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\ruyi\ruyi-init"
+```
+
+其他阶段 skill 按同样方式链接。安装后重启 code agent。
 
 ## 入口路由
 
@@ -126,7 +136,7 @@ cmd /c mklink /J "$env:USERPROFILE\.agents\skills\ruyi" "D:\AIWorks\ruyi\skills"
 可选复核：
 
 ```powershell
-python .\skills\using-ruyi\scripts\route_request.py --project <project> --intent continue --module <module> --feature <feature> --date <YYYY-MM-DD>
+python .\ruyi\using-ruyi\scripts\route_request.py --project <project> --intent continue --module <module> --feature <feature> --date <YYYY-MM-DD>
 ```
 
 脚本只判断下一阶段，不生成正式产物。自然语言意图仍由 agent 判断。Python 不可用时，agent 必须按 schema 和路由判定表直接读取 `.ruyi/`，不能绕过门禁。
@@ -149,32 +159,7 @@ ruyi-spec-merge  周期性人工合入 spec-candidate
 
 这些脚本用于稳定写入协议产物，不替代 agent 的需求澄清、编码实现、测试判断和审批沟通。
 
-运行时 fallback 见 [references/script-runtime-protocol.md](references/script-runtime-protocol.md)。
-
-## 验证
-
-运行所有 Python 脚本测试：
-
-```powershell
-python -m unittest discover .\skills\using-ruyi\scripts\tests -v
-python -m unittest discover .\skills\ruyi-init\scripts\tests -v
-python -m unittest discover .\skills\ruyi-contract\scripts\tests -v
-python -m unittest discover .\skills\ruyi-plan\scripts\tests -v
-python -m unittest discover .\skills\ruyi-implement\scripts\tests -v
-python -m unittest discover .\skills\ruyi-test\scripts\tests -v
-python -m unittest discover .\skills\ruyi-explain\scripts\tests -v
-python -m unittest discover .\skills\ruyi-approve\scripts\tests -v
-python -m unittest discover .\skills\ruyi-spec-evolve\scripts\tests -v
-```
-
-验证 fixture 前端构建：
-
-```powershell
-cd .\fixtures\vue-vite-basic
-npx vite build
-```
-
-注意：fixture 的 `npm run build` 当前受 `vue-tsc` 与环境兼容问题影响，`npx vite build` 可通过。
+运行时 fallback 见 [ruyi/references/script-runtime-protocol.md](ruyi/references/script-runtime-protocol.md)。
 
 ## 当前状态
 
@@ -184,12 +169,12 @@ npx vite build
 init -> contract -> plan -> task/implement -> test -> explain -> approve -> spec-candidate
 ```
 
-fixture 中已经用两个示例需求验证：
+开发仓库中已用两个示例需求验证：
 
 - `board/card-status-filter`
 - `orders/order-keyword-search`
 
-同时包含失败/退回 fixture：
+同时验证了失败/退回场景：
 
 - `board/missing-acceptance`：contract 缺验收标准，阻止进入 plan。
 - `orders/orphan-plan`：孤立 plan，阻止进入 implement。

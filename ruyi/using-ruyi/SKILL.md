@@ -118,19 +118,19 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 当请求对应某个具体 contract，并且能识别 `module / feature / date` 时，先运行：
 
 ```bash
-python skills/using-ruyi/scripts/route_request.py --project <project> --intent <intent> --module <module> --feature <feature> --date <YYYY-MM-DD>
+python <skills-dir>/using-ruyi/scripts/route_request.py --project <project> --intent <intent> --module <module> --feature <feature> --date <YYYY-MM-DD>
 ```
 
 如果项目未初始化，可以只传：
 
 ```bash
-python skills/using-ruyi/scripts/route_request.py --project <project> --intent init
+python <skills-dir>/using-ruyi/scripts/route_request.py --project <project> --intent init
 ```
 
 如果用户只说“继续”，且当前对话无法可靠识别 `module / feature / date`，可以运行：
 
 ```bash
-python skills/using-ruyi/scripts/route_request.py --project <project> --intent continue
+python <skills-dir>/using-ruyi/scripts/route_request.py --project <project> --intent continue
 ```
 
 脚本职责：
@@ -146,13 +146,13 @@ python skills/using-ruyi/scripts/route_request.py --project <project> --intent c
 
 ## 8. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/knowledge-evolution.md`
-- `../../references/index-protocol.md`
-- `../../references/script-runtime-protocol.md`
-- `../../references/spec-schema.md`
-- `../../references/contract-schema.md`
-- `../../references/plan-schema.md`
-- `../../references/task-schema.md`
-- `../../references/explain-schema.md`
+- `../references/main-flow.md`
+- `../references/knowledge-evolution.md`
+- `../references/index-protocol.md`
+- `../references/script-runtime-protocol.md`
+- `../references/spec-schema.md`
+- `../references/contract-schema.md`
+- `../references/plan-schema.md`
+- `../references/task-schema.md`
+- `../references/explain-schema.md`
 - `references/engineering-discipline.md`

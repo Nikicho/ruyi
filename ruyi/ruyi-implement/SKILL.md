@@ -52,7 +52,7 @@ description: Use when an approved Ruyi plan should be implemented in frontend co
 task 是 plan 下的执行单元。当前 task 创建脚本保留在 `ruyi-implement` 下，用于进入实现阶段前后创建执行单元：
 
 ```bash
-python skills/ruyi-implement/scripts/task_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --goal <goal> --scope <item> --write-scope <item> --step <item> --completion <item>
+python <skills-dir>/ruyi-implement/scripts/task_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --goal <goal> --scope <item> --write-scope <item> --step <item> --completion <item>
 ```
 
 脚本职责：
@@ -66,11 +66,11 @@ python skills/ruyi-implement/scripts/task_create.py --project <project> --module
 
 ## 7. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/spec-schema.md`
-- `../../references/contract-schema.md`
-- `../../references/plan-schema.md`
-- `../../references/task-schema.md`
+- `../references/main-flow.md`
+- `../references/spec-schema.md`
+- `../references/contract-schema.md`
+- `../references/plan-schema.md`
+- `../references/task-schema.md`
 - `../using-ruyi/references/engineering-discipline.md`
 - `references/implementation-discipline.md`
 - `references/code-review-discipline.md`

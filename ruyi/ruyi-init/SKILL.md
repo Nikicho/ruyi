@@ -101,6 +101,6 @@ description: Use when an existing frontend project needs to be initialized for R
 
 ## 8. 必读参考
 
-- `../../references/main-flow.md`
-- `../../references/spec-schema.md`
+- `../references/main-flow.md`
+- `../references/spec-schema.md`
 - `references/init-discipline.md`

@@ -33,7 +33,7 @@ Ruyi 是一个面向前端项目的 AI 协作开发框架，以 code agent skill
 ```text
 assets/
 └── ruyi-home.png
-ruyi/
+skills/
 ├── using-ruyi/
 ├── ruyi-init/
 ├── ruyi-contract/
@@ -43,19 +43,18 @@ ruyi/
 ├── ruyi-explain/
 ├── ruyi-approve/
 ├── ruyi-spec-evolve/
-├── ruyi-spec-merge/
-└── references/
+└── ruyi-spec-merge/
 ```
 
 `using-ruyi` 是入口 skill。其他 skill 只负责各自阶段。
 
-安装时把 `ruyi/` 文件夹里的内容放到目标 code agent 的 skills 目录即可。`references/` 不是独立 skill，而是 Ruyi 各阶段共用的协议和 schema。
+安装时把 `skills/` 文件夹里的内容放到目标 code agent 的 skills 目录即可。每个 skill 都带自己的 `references/`，不依赖共享目录，方便 Trae、Claude Code CLI 等工具直接识别。
 
 ## 分层模型
 
 Ruyi 有三层，不应该混在一起：
 
-- `ruyi/`：Ruyi 本体 skill 包，提供固定主流程、协议 schema、阶段 skill 和辅助脚本。
+- `skills/`：Ruyi 本体 skill 包，提供固定主流程、协议 schema、阶段 skill 和辅助脚本。
 - `.ruyi/`：项目级知识层，放在具体业务项目根目录，记录当前项目的规范、需求、计划、验证、简报和沉淀候选。
 - `ruyi-team/`：团队级知识层，可选存在，用于放团队统一规范、跨项目经验、团队动作和公共约束。
 
@@ -125,7 +124,7 @@ Ruyi 固定主流程：
 
 ## 使用方式
 
-把 `ruyi/` 文件夹里的内容复制或链接到目标 code agent 可用的 skills 目录后，在项目中对 agent 说自然语言目标即可，例如：
+把 `skills/` 文件夹里的内容复制或链接到目标 code agent 可用的 skills 目录后，在项目中对 agent 说自然语言目标即可，例如：
 
 - “把这个 Vue 项目接入 Ruyi。”
 - “新增订单关键词搜索。”
@@ -138,20 +137,20 @@ agent 应先加载 `using-ruyi`，再根据项目状态和用户意图路由到�
 
 ## 安装
 
-Ruyi 仿照 Superpowers 的安装思路：保留完整仓库目录，把 `ruyi/` 文件夹里的内容放到目标 code agent 可发现的 skills 目录。
+Ruyi 仿照 Superpowers 的安装思路：保留完整仓库目录，把 `skills/` 文件夹里的内容放到目标 code agent 可发现的 skills 目录。
 
 复制安装：
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
-Copy-Item -Recurse -Force ".\ruyi\*" "$env:USERPROFILE\.agents\skills\"
+Copy-Item -Recurse -Force ".\skills\*" "$env:USERPROFILE\.agents\skills\"
 ```
 
 本地开发时也可以分别建立目录联接，避免复制后忘记同步：
 
 ```powershell
-cmd /c mklink /J "%USERPROFILE%\.agents\skills\using-ruyi" "D:\AIWorks\ruyi\ruyi\using-ruyi"
-cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\ruyi\ruyi-init"
+cmd /c mklink /J "%USERPROFILE%\.agents\skills\using-ruyi" "D:\AIWorks\ruyi\skills\using-ruyi"
+cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\skills\ruyi-init"
 ```
 
 其他阶段 skill 按同样方式链接。安装后重启 code agent。
@@ -163,7 +162,7 @@ cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\ruyi\
 可选复核：
 
 ```powershell
-python .\ruyi\using-ruyi\scripts\route_request.py --project <project> --intent continue --module <module> --feature <feature> --date <YYYY-MM-DD>
+python .\skills\using-ruyi\scripts\route_request.py --project <project> --intent continue --module <module> --feature <feature> --date <YYYY-MM-DD>
 ```
 
 脚本只判断下一阶段，不生成正式产物。自然语言意图仍由 agent 判断。Python 不可用时，agent 必须按 schema 和路由判定表直接读取 `.ruyi/`，不能绕过门禁。
@@ -186,7 +185,7 @@ ruyi-spec-merge  周期性人工合入 spec-candidate
 
 这些脚本用于稳定写入协议产物，不替代 agent 的需求澄清、编码实现、测试判断和审批沟通。
 
-运行时 fallback 见 [ruyi/references/script-runtime-protocol.md](ruyi/references/script-runtime-protocol.md)。
+运行时 fallback 见 [skills/using-ruyi/references/script-runtime-protocol.md](skills/using-ruyi/references/script-runtime-protocol.md)。
 
 ## 当前状态
 

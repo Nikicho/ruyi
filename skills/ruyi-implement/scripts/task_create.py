@@ -155,13 +155,20 @@ def render_task(payload: dict[str, Any]) -> str:
     self_review = as_list(payload.get("self_review")) or ["任务未完成时暂不填写。"]
 
     status = "pending" if payload["status"] == "todo" else payload["status"]
-    superseded_by = f"superseded_by: {payload['superseded_by']}\n" if payload.get("superseded_by") else ""
+    optional_frontmatter = f"superseded_by: {payload['superseded_by']}\n" if payload.get("superseded_by") else ""
+    frontmatter_lines = "\n".join(
+        line
+        for line in [
+            f"status: {status}",
+            f"contract: {contract}",
+            f"plan: {plan}",
+            optional_frontmatter.rstrip(),
+        ]
+        if line
+    )
 
     return f"""---
-status: {status}
-contract: {contract}
-plan: {plan}
-{superseded_by.rstrip()}
+{frontmatter_lines}
 ---
 
 # Task：{payload["title"]}

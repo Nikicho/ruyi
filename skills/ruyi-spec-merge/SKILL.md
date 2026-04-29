@@ -9,7 +9,7 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 
 - 用户要求查看可合入的规范候选。
 - 用户要求把某个 spec-candidate 合入正式 spec。
-- 用户要求拒绝或归档候选。
+- 用户要求拒绝、取代或归档候选。
 
 ## 2. 硬门禁
 
@@ -24,15 +24,15 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 1. 读取 `references/spec-merge-protocol.md`。
 2. 使用 `merge_list.py` 列出 pending candidates。
 3. 使用 `merge_diff.py` 预览候选会如何影响目标 spec。
-4. 用户确认后，使用 `merge_apply.py` 合入或拒绝。
-5. 合入后候选进入 `.ruyi/spec-archive/merged/`；拒绝后进入 `.ruyi/spec-archive/rejected/`。
+4. 用户确认后，使用 `merge_apply.py` 合入、拒绝或标记为已被取代。
+5. 合入后候选进入 `.ruyi/spec-archive/merged/`；拒绝后进入 `.ruyi/spec-archive/rejected/`；被新候选取代后进入 `.ruyi/spec-archive/superseded/`。
 
 ## 4. 脚本调用
 
 ```bash
 python <skills-dir>/ruyi-spec-merge/scripts/merge_list.py --project <project>
 python <skills-dir>/ruyi-spec-merge/scripts/merge_diff.py --project <project> --candidate <path>
-python <skills-dir>/ruyi-spec-merge/scripts/merge_apply.py --project <project> --candidate <path> --decision <merged|rejected> --reason <reason>
+python <skills-dir>/ruyi-spec-merge/scripts/merge_apply.py --project <project> --candidate <path> --decision <merged|rejected|superseded> --reason <reason>
 ```
 
 脚本只处理 Markdown 协议文件，不判断业务正确性。

@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 
 from merge_common import archive_path, parse_frontmatter_text, render_frontmatter, section_bullets
 
 
-DECISIONS = ("merged", "rejected")
+DECISIONS = ("merged", "rejected", "superseded")
+
+
+def rebuild_index_if_available(project: Path) -> dict | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
 
 
 def apply_merge(project_path: str | Path, candidate_path: str | Path, decision: str, reason: str) -> dict:
@@ -44,7 +57,8 @@ def apply_merge(project_path: str | Path, candidate_path: str | Path, decision: 
     archived.parent.mkdir(parents=True, exist_ok=True)
     archived.write_text(render_frontmatter(frontmatter) + "\n" + body.lstrip(), encoding="utf-8")
     candidate.unlink()
-    return {"updated": True, "decision": decision, "archive": str(archived)}
+    index_result = rebuild_index_if_available(project)
+    return {"updated": True, "decision": decision, "archive": str(archived), "index": index_result}
 
 
 def main(argv: list[str] | None = None, *, emit: bool = True) -> str:

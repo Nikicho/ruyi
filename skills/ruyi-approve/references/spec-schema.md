@@ -13,6 +13,17 @@
 - `frontend-baseline.md`
 - `testing-baseline.md`
 - `open-questions.md`
+- `api/README.md`
+
+项目层 `.ruyi/spec/api/` 用于长期 API 约定和外部权威源入口，不维护完整接口列表。建议包含：
+
+- `api-source.md`：Swagger / Apifox / Yapi / OpenAPI 等权威源入口和访问方式。
+- `response-envelope.md`：统一响应结构约定。
+- `error-codes.md`：错误码约定。
+- `auth-flow.md`：鉴权流程约定。
+- `conventions.md`：命名、分页、排序等通用约定。
+
+禁止把完整 Swagger JSON、完整接口字段表、临时 mock 数据放入 `spec/api/`。Ruyi 只引用 API 权威源，不重新维护后端 API 文档。
 
 ## 3. 章节规则
 

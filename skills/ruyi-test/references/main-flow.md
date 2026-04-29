@@ -74,3 +74,18 @@ tiny 不是绕过 Ruyi。tiny 只是省略 plan/task/explain/approve/spec-candid
 以下动作不属于单次需求主流程，但允许周期性执行：
 
 - `ruyi-spec-merge`：人工确认并合入 spec-candidate 到正式 spec。
+
+## 9. 中途变更处理
+
+中途变更不新增阶段，也不新增 skill。它在现有 contract / plan / implement / test 阶段内部处理。
+
+agent 必须先把变更分类说给用户确认，用户确认前不得落盘或改代码。
+
+| 类型 | 名称 | 判断 | 处理 |
+| --- | --- | --- | --- |
+| A | 微调 | 不改业务规则、验收标准、接口路径/方法，不影响已完成产物 | contract 原地修订，追加 `## 修订记录` |
+| B | 范围扩展或策略调整 | 改需求范围、接口范围、接口对接或影响 task，但不改核心业务定义 | contract 修订，plan 重评，必要 task 标 `superseded` |
+| C | 语义变化 | 改用户故事核心、业务规则、已确认验收标准或需求类型 | 新建日期 contract，旧 contract 加 `superseded_by`，plan/test 重做 |
+| D | 审批后变化 | 已有 `approved` 或满足条件的 `conditionally-approved` explain 后再变化 | 视为新需求，新 contract 加 `derived_from`，不修改已审批事实 |
+
+审批是阶段切割线。已审批产物不能被原地改写来承载新需求。

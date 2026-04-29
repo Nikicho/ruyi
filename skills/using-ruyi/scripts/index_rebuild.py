@@ -6,6 +6,7 @@ import argparse
 import json
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 
 SECTIONS = {
@@ -35,13 +36,108 @@ def artifact_identity(project: Path, path: Path) -> tuple[str, str, str, str] | 
     return None
 
 
+def parse_frontmatter(text: str) -> dict[str, str]:
+    if not text.startswith("---\n"):
+        return {}
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        return {}
+    data: dict[str, str] = {}
+    for line in text[4:end].splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        data[key.strip()] = value.strip()
+    return data
+
+
+def section_text(text: str, heading: str) -> str:
+    marker = f"## {heading}"
+    start = text.find(marker)
+    if start == -1:
+        return ""
+    body_start = text.find("\n", start)
+    if body_start == -1:
+        return ""
+    next_heading = text.find("\n## ", body_start + 1)
+    if next_heading == -1:
+        return text[body_start:].strip()
+    return text[body_start:next_heading].strip()
+
+
+def first_non_empty_line(text: str) -> str:
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            return stripped.removeprefix("- ").strip()
+    return ""
+
+
+def contract_summary(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    text = path.read_text(encoding="utf-8")
+    frontmatter = parse_frontmatter(text)
+    business_rules = section_text(text, "业务规则")
+    goal = frontmatter.get("goal", "")
+    if not goal:
+        for line in business_rules.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("- 业务目标："):
+                goal = stripped.split("：", 1)[1].strip()
+                break
+    if not goal:
+        goal = first_non_empty_line(section_text(text, "用户故事"))
+    return {
+        "goal": goal or "待补充",
+        "type": frontmatter.get("type", "待补充"),
+        "size": frontmatter.get("size", ""),
+        "status": frontmatter.get("status", "待补充"),
+        "superseded_by": frontmatter.get("superseded_by", ""),
+        "derived_from": frontmatter.get("derived_from", ""),
+    }
+
+
+def status_rank(status: str) -> int:
+    ranks = {
+        "approved": 90,
+        "conditionally-approved": 80,
+        "completed": 70,
+        "confirmed": 60,
+        "passed": 50,
+        "draft": 10,
+        "待补充": 0,
+    }
+    return ranks.get(status, 0)
+
+
+def merge_feature_meta(current: dict[str, str], candidate: dict[str, str]) -> dict[str, str]:
+    if not current:
+        return candidate
+    if candidate.get("goal") and current.get("goal") in ("", "待补充"):
+        current["goal"] = candidate["goal"]
+    if candidate.get("type") and current.get("type") in ("", "待补充"):
+        current["type"] = candidate["type"]
+    if candidate.get("size") and not current.get("size"):
+        current["size"] = candidate["size"]
+    if status_rank(candidate.get("status", "")) >= status_rank(current.get("status", "")):
+        current["status"] = candidate.get("status", current.get("status", "待补充"))
+    for key in ("superseded_by", "derived_from"):
+        if candidate.get(key):
+            current[key] = candidate[key]
+    return current
+
+
 def rebuild_index(project_path: str | Path) -> dict:
     project = Path(project_path)
     ruyi = project / ".ruyi"
     if not ruyi.is_dir():
         return {"updated": False, "reason": "ruyi-not-found", "path": None}
 
-    grouped: dict[str, dict[str, list[tuple[str, str]]]] = defaultdict(lambda: defaultdict(list))
+    grouped: dict[str, dict[str, dict[str, Any]]] = defaultdict(
+        lambda: defaultdict(lambda: {"artifacts": defaultdict(list), "meta": {}})
+    )
+    warnings: list[str] = []
     for section in SECTIONS:
         root = ruyi / section
         if not root.is_dir():
@@ -53,20 +149,45 @@ def rebuild_index(project_path: str | Path) -> dict:
             if not identity:
                 continue
             module, feature, date, kind = identity
-            grouped[module][feature].append((date, kind))
+            grouped[module][feature]["artifacts"][date].append(kind)
+            if section == "contracts":
+                meta = contract_summary(path)
+                grouped[module][feature]["meta"] = merge_feature_meta(grouped[module][feature]["meta"], meta)
+                if meta.get("goal") == "待补充":
+                    warnings.append(f"{module}/{feature}/{date} 缺少可抽取的业务目标")
+            if section == "explain":
+                frontmatter = parse_frontmatter(path.read_text(encoding="utf-8"))
+                approval = frontmatter.get("approval")
+                if approval:
+                    grouped[module][feature]["meta"] = merge_feature_meta(
+                        grouped[module][feature]["meta"],
+                        {"status": approval},
+                    )
 
     lines = ["# Ruyi Index", "", "> 自动生成，请勿手工编辑。", ""]
     for module in sorted(grouped):
         lines.extend([f"## 模块：{module}", ""])
         for feature in sorted(grouped[module]):
             lines.extend([f"### {feature}", ""])
-            for date, kind in sorted(grouped[module][feature]):
-                lines.append(f"- {date} {kind}")
+            meta = grouped[module][feature]["meta"] or {}
+            type_text = meta.get("type") or "待补充"
+            if meta.get("size"):
+                type_text = f"{type_text}, size: {meta['size']}"
+            lines.append(f"- 业务目标：{meta.get('goal') or '待补充'}")
+            lines.append(f"- 类型：{type_text}")
+            lines.append(f"- 状态：{meta.get('status') or '待补充'}")
+            if meta.get("superseded_by"):
+                lines.append(f"- 已被取代：{meta['superseded_by']}")
+            if meta.get("derived_from"):
+                lines.append(f"- 来源：{meta['derived_from']}")
+            for date in sorted(grouped[module][feature]["artifacts"]):
+                kinds = " / ".join(sorted(set(grouped[module][feature]["artifacts"][date])))
+                lines.append(f"- {date} {kinds}")
             lines.append("")
 
     target = ruyi / "INDEX.md"
     target.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
-    return {"updated": True, "reason": None, "path": str(target)}
+    return {"updated": True, "reason": None, "path": str(target), "warnings": warnings}
 
 
 def main(argv: list[str] | None = None, *, emit: bool = True) -> str:

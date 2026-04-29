@@ -13,11 +13,13 @@ SPEC_FILES = (
     "frontend-baseline.md",
     "testing-baseline.md",
     "open-questions.md",
+    "api/README.md",
 )
 
 REQUIRED_RUYI_DIRS = (
     ".ruyi",
     ".ruyi/spec",
+    ".ruyi/spec/api",
     ".ruyi/contracts",
     ".ruyi/plans",
     ".ruyi/tasks",
@@ -34,6 +36,9 @@ REQUIRED_RUYI_FILES = (
     ".ruyi/INDEX.md",
     ".ruyi/project-actions.md",
     ".ruyi/workspace/README.md",
+    "CLAUDE.md",
+    ".claude/settings.json",
+    ".claude/commands/ruyi.md",
     *tuple(f".ruyi/spec/{name}" for name in SPEC_FILES),
 )
 

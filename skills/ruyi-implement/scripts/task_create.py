@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from pathlib import Path
 from typing import Any
 
 
-TASK_STATUSES = ("todo", "in-progress", "done", "blocked")
+TASK_STATUSES = ("pending", "todo", "in-progress", "done", "blocked", "superseded", "cancelled")
 PLAN_READY_STATUSES = ("confirmed",)
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -64,6 +65,8 @@ def validate_payload(payload: dict[str, Any]) -> None:
         raise ValueError("completion must include at least one item")
     if payload["status"] == "done" and not as_list(payload.get("self_review")):
         raise ValueError("done task must include self_review")
+    if payload["status"] == "superseded" and not payload.get("superseded_by"):
+        raise ValueError("superseded task must include superseded_by")
 
 
 def is_initialized(project: Path) -> bool:
@@ -113,6 +116,18 @@ def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
+def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
+
+
 def parse_frontmatter(path: Path) -> dict[str, str]:
     if not path.is_file():
         return {}
@@ -139,10 +154,14 @@ def render_task(payload: dict[str, Any]) -> str:
     risks = as_list(payload.get("risks")) or ["暂无。"]
     self_review = as_list(payload.get("self_review")) or ["任务未完成时暂不填写。"]
 
+    status = "pending" if payload["status"] == "todo" else payload["status"]
+    superseded_by = f"superseded_by: {payload['superseded_by']}\n" if payload.get("superseded_by") else ""
+
     return f"""---
-status: {payload["status"]}
+status: {status}
 contract: {contract}
 plan: {plan}
+{superseded_by.rstrip()}
 ---
 
 # Task：{payload["title"]}
@@ -226,11 +245,13 @@ def create_task(project_path: str | Path, payload: dict[str, Any]) -> dict[str, 
     target = next_task_path(project, payload)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_task(payload), encoding="utf-8")
+    index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "task 已创建。",
         "path": str(target),
+        "index": index_result,
     }
 
 
@@ -241,7 +262,7 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--feature", required=True, help="Feature slug")
     parser.add_argument("--date", required=True, help="Contract date, YYYY-MM-DD")
     parser.add_argument("--title", required=True, help="Task title")
-    parser.add_argument("--status", default="todo", choices=TASK_STATUSES, help="Task status")
+    parser.add_argument("--status", default="pending", choices=TASK_STATUSES, help="Task status")
     parser.add_argument("--goal", required=True, help="Task goal")
     parser.add_argument("--scope", action="append", required=True, help="Task scope item")
     parser.add_argument("--write-scope", action="append", required=True, help="Task write scope item")
@@ -250,6 +271,7 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--risk", action="append", default=[], help="Risk or concern")
     parser.add_argument("--completion", action="append", required=True, help="Completion criterion")
     parser.add_argument("--self-review", action="append", default=[], help="Implementation self-review or code review conclusion")
+    parser.add_argument("--superseded-by", help="Replacement task id/path when status is superseded")
     args = parser.parse_args(argv)
 
     payload = {
@@ -266,6 +288,7 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
         "risks": args.risk,
         "completion": args.completion,
         "self_review": args.self_review,
+        "superseded_by": args.superseded_by,
     }
     output = json.dumps(create_task(args.project, payload), ensure_ascii=False, indent=2)
     if emit:

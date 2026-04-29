@@ -1,6 +1,6 @@
 ---
 name: ruyi-implement
-description: Use when an approved Ruyi plan should be implemented in frontend code, with task execution, code self-review, and project spec constraints.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is implementation. Handles frontend coding from a confirmed plan, task execution, code self-review, project spec constraints, and implementation quality checks.
 ---
 
 # Ruyi Implement

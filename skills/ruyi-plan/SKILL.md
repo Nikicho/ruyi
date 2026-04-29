@@ -1,6 +1,6 @@
 ---
 name: ruyi-plan
-description: Use when a confirmed Ruyi contract needs implementation planning, test strategy mapping, task breakdown, execution order, or write-scope boundaries before coding.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is implementation planning or plan re-evaluation. Handles test strategy mapping, API integration strategy, task breakdown, execution order, and write-scope boundaries before coding.
 ---
 
 # Ruyi Plan
@@ -11,6 +11,7 @@ description: Use when a confirmed Ruyi contract needs implementation planning, t
 - 需要把自然语言测试用例转成验证策略。
 - 需要把一次 contract 拆成一个或多个 task。
 - 需要判断实施顺序、依赖关系和写入范围。
+- 中途变更类型 B 后，需要重评 plan 和 task。
 
 ## 2. 硬门禁
 
@@ -35,11 +36,26 @@ description: Use when a confirmed Ruyi contract needs implementation planning, t
 4. 读取 `references/plan-schema.md`。
 5. 读取 `references/planning-discipline.md`。
 6. 将自然语言测试用例映射为验证策略。
-7. 拆分 task，并明确每个 task 的写入范围和完成条件。
-8. 明确实施顺序、依赖和风险。
-9. 用户确认后，写入 plan，并按需生成 task。
+7. 如果 contract 存在 `## 接口范围`，补齐 `## 接口对接`：调用层、类型定义、mock 策略、错误处理、状态管理。
+8. 拆分 task，并明确每个 task 的写入范围和完成条件。
+9. 明确实施顺序、依赖和风险。
+10. 用户确认后，写入 plan，并按需生成 task。
 
-## 5. 产物要求
+## 5. 重评模式
+
+类型 B 中途变更后进入重评模式：
+
+1. 读取最新 contract 的 `## 修订记录`。
+2. 列出当前 plan 中所有 task 的状态。
+3. 判断每个 task 是否仍有效：
+   - 已 `done` 但被新需求取代，标记为 `superseded`。
+   - `in-progress` 且与新需求冲突，暂停并转为 `superseded` 或调整。
+   - `pending` 且仍有效，保留。
+   - 新增需求，创建新 task，编号继续递增。
+4. plan 文件追加 `## 修订记录`，引用 contract 修订条目。
+5. 不允许只新增 task 而不评估已有 task 的影响。
+
+## 6. 产物要求
 
 产物路径：
 
@@ -49,17 +65,18 @@ description: Use when a confirmed Ruyi contract needs implementation planning, t
 
 正文结构遵守 `references/plan-schema.md`。
 
-## 6. 脚本调用
+## 7. 脚本调用
 
 确认 contract 已经 `confirmed` 后，可以使用脚本生成正式 plan：
 
 ```bash
-python <skills-dir>/ruyi-plan/scripts/plan_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --status <draft|confirmed|blocked> --goal <goal> --input <item> --test-strategy <item> --task <item> --sequence <item> --write-scope <item> --completion <item>
+python <skills-dir>/ruyi-plan/scripts/plan_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --status <draft|confirmed|blocked> --goal <goal> --input <item> --test-strategy <item> --api-integration <item> --task <item> --sequence <item> --write-scope <item> --completion <item>
 ```
 
 可选参数：
 
 - `--risk <item>`
+- `--api-integration <item>`：当 contract 存在 `## 接口范围` 时必填。
 
 脚本职责：
 
@@ -72,7 +89,7 @@ python <skills-dir>/ruyi-plan/scripts/plan_create.py --project <project> --modul
 
 脚本只负责落盘，不替代 agent 的实施设计判断。
 
-## 7. 必读参考
+## 8. 必读参考
 
 - `references/main-flow.md`
 - `references/contract-schema.md`

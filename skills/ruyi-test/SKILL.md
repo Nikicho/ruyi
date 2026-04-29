@@ -1,6 +1,6 @@
 ---
 name: ruyi-test
-description: Use when a Ruyi implementation result needs frontend validation, fast-browser UI automation, manual test evidence, coverage notes, or a verification summary before explain.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is verification. Handles frontend validation, fast-browser UI automation, natural-language test case execution, manual evidence, coverage notes, and verification summary before explain.
 ---
 
 # Ruyi Test

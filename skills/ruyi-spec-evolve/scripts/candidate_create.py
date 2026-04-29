@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -16,6 +17,11 @@ TARGET_SPECS = (
     "frontend-baseline.md",
     "testing-baseline.md",
     "open-questions.md",
+    "api/api-source.md",
+    "api/response-envelope.md",
+    "api/error-codes.md",
+    "api/auth-flow.md",
+    "api/conventions.md",
 )
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -103,6 +109,18 @@ def parse_frontmatter(text: str) -> dict[str, str] | None:
 
 def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
+
+
+def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
 
 
 def render_candidate(payload: dict[str, Any]) -> str:
@@ -199,11 +217,13 @@ def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_candidate(payload), encoding="utf-8")
+    index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "spec candidate 已创建。",
         "path": str(target),
+        "index": index_result,
     }
 
 

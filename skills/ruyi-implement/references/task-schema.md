@@ -24,6 +24,18 @@ tasks/<module>/<feature>/<contract-date>/task-01.md
 - 对应 Contract
 - 对应 Plan
 
+任务状态建议使用：
+
+- `pending`
+- `in-progress`
+- `done`
+- `superseded`
+- `cancelled`
+
+`superseded` 表示该 task 被中途变更后的新 task 取代，agent 不应继续执行。此状态必须同时写明 `superseded_by: <task-id>`。
+
+`cancelled` 表示用户撤销，未被新 task 取代。
+
 ## 4. 正文结构
 
 ```md

@@ -36,8 +36,10 @@ contracts/<module>/<feature>/<YYYY-MM-DD>.md
 ## 需求范围
 ## 业务规则
 ## 修复事实
+## 接口范围
 ## 验收标准
 ## 测试用例
+## 修订记录
 ```
 
 `## 修复事实` 仅在 `type: fix` 时必填，必须包含：
@@ -46,16 +48,51 @@ contracts/<module>/<feature>/<YYYY-MM-DD>.md
 - 影响范围。
 - 验证方向。
 
+`## 接口范围` 在本次需求涉及后端接口、BFF、mock 接口或接口字段变化时必填。该段只记录本次涉及接口的范围，不抄完整 API 文档。
+
+推荐结构：
+
+```md
+## 接口范围
+
+| 接口 | 方法 | 类型 | 来源 | 备注 |
+| --- | --- | --- | --- | --- |
+| /api/orders/search | POST | 新增 | 待后端补充 | 关键词搜索 |
+```
+
+类型枚举：`新增 / 修改 / 复用 / 废弃`。
+
+临时定义仅在后端权威文档未就位时允许，必须标注来源和替换时机：
+
+```md
+### /api/orders/search（临时定义，待后端正式文档替换）
+
+- 临时定义来源：与后端在 2026-04-28 确认
+- 替换时机：Apifox / Swagger 发布后删除本段，改为链接权威源
+```
+
+`## 修订记录` 在中途变更类型 A/B 时使用；类型 C 新建日期 contract，旧 contract 只在 frontmatter 写 `superseded_by`。
+
 ## 4. 演进规则
 
 - 语义变化时，新建新的日期文件。
 - 非语义修订时，原地修改当前文件。
 - 当前生效版本等于同目录下最新日期文件。
+- 中途变更必须先分类并获得用户确认：
+  - 类型 A：微调，不改业务规则、验收标准、接口路径/方法，不影响已完成产物，原地修订并追加 `## 修订记录`。
+  - 类型 B：范围扩展或策略调整，改需求范围、接口范围、接口对接或影响 task，contract 原地修订，plan 进入重评。
+  - 类型 C：语义变化，改用户故事核心、业务规则、已确认验收标准或需求类型，新建日期 contract，旧 contract 加 `superseded_by`。
+  - 类型 D：审批后变化，视为新需求，新 contract 加 `derived_from`，不修改已审批产物。
 
 ## 5. 状态规则
 
 - `draft`：草稿，尚未确认，不能进入 plan。
 - `confirmed`：已确认，可进入 plan。
+
+frontmatter 允许包含：
+
+- `superseded_by`：类型 C 使用，指向取代当前 contract 的新日期文件。
+- `derived_from`：类型 D 使用，指向产生本次新需求的旧 contract。
 
 ## 6. 分档规则
 
@@ -68,7 +105,10 @@ contracts/<module>/<feature>/<YYYY-MM-DD>.md
 ## 7. 硬门禁
 
 - 没有明确需求目标时，不落盘。
-- 没有核心验收标准和测试用例时，不进入 plan。
+- 没有验收标准时，contract 不能标 `confirmed`。
+- 没有测试用例时，contract 不能标 `confirmed`，也不进入 plan；draft 允许至少 1 条占位骨架。
+- `confirmed` 且 `size: standard / large` 时，测试用例必须覆盖正常路径、边界、异常三类。
+- 涉及接口但缺少 `## 接口范围` 时，不能标 `confirmed`。
 - `fix` 类型缺少问题现象、影响范围或验证方向时，不落盘。
 - `fix` 类型不能标记为 `tiny`。
 - 未确认的 `draft` contract 不进入 plan。

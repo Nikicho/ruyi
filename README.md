@@ -100,6 +100,7 @@ Ruyi 固定主流程：
 .ruyirc
 .ruyi/
 ├── spec/
+│   └── api/
 ├── contracts/
 ├── plans/
 ├── tasks/
@@ -107,13 +108,19 @@ Ruyi 固定主流程：
 ├── explain/
 ├── spec-candidates/
 ├── workspace/
+├── INDEX.md
 ├── project-actions.md
 └── README.md
+.claude/
+└── commands/
+    └── ruyi.md
+CLAUDE.md
 ```
 
 其中：
 
 - `spec/`：项目长期有效事实和规范。
+- `spec/api/`：长期 API 约定和外部权威 API 文档入口，不维护完整接口列表。
 - `contracts/`：某次需求的设计与验收定义。
 - `plans/`：围绕 contract 的开发计划、测试策略和 task 拆分。
 - `tasks/`：围绕 plan 的执行单元。
@@ -121,6 +128,8 @@ Ruyi 固定主流程：
 - `explain/`：面向 PM 的开发简报。
 - `spec-candidates/`：审批通过后的知识沉淀候选。
 - `workspace/`：临时过程材料，默认不提交正式内容。
+- `INDEX.md`：跨需求轻量索引，Ritual 阶段优先读取它，不扫全部产物。
+- `.claude/` 与 `CLAUDE.md`：入口保护和手动兜底。
 
 ## 使用方式
 
@@ -134,6 +143,14 @@ Ruyi 固定主流程：
 - “把这次经验沉淀一下。”
 
 agent 应先加载 `using-ruyi`，再根据项目状态和用户意图路由到具体阶段。
+
+Ruyi 初始化后会部署三层入口保护：
+
+- `.claude/settings.json`：在 Claude Code 中通过 UserPromptSubmit hook 注入 Ruyi reminder。
+- `CLAUDE.md`：提供项目级持久提示，降低长对话中漏走 Ruyi 的概率。
+- `.claude/commands/ruyi.md`：提供 `/ruyi` 手动兜底命令。
+
+如果发现 agent 没有走 Ruyi 流程，可以输入 `/ruyi` 强制激活。
 
 ## 安装
 
@@ -167,6 +184,8 @@ python .\skills\using-ruyi\scripts\route_request.py --project <project> --intent
 
 脚本只判断下一阶段，不生成正式产物。自然语言意图仍由 agent 判断。Python 不可用时，agent 必须按 schema 和路由判定表直接读取 `.ruyi/`，不能绕过门禁。
 
+Ritual 阶段只读 `.ruyi/INDEX.md`；路由确定到具体 feature 前，不读取多个 contract / plan / explain 正文。
+
 ## 阶段脚本
 
 当前最小脚本链：
@@ -186,6 +205,16 @@ ruyi-spec-merge  周期性人工合入 spec-candidate
 这些脚本用于稳定写入协议产物，不替代 agent 的需求澄清、编码实现、测试判断和审批沟通。
 
 运行时 fallback 见 [skills/using-ruyi/references/script-runtime-protocol.md](skills/using-ruyi/references/script-runtime-protocol.md)。
+
+## API 文档归位
+
+Ruyi 不维护后端 API 文档本体，只维护三类信息：
+
+- `.ruyi/spec/api/`：长期 API 约定和权威源入口，例如 Swagger / Apifox / Yapi / OpenAPI 链接。
+- `contract` 的 `## 接口范围`：本次需求涉及哪些接口、新增/修改/复用/废弃。
+- `plan` 的 `## 接口对接`：前端如何接 service、类型、mock、错误处理和状态管理。
+
+完整请求响应结构应留在后端权威源；只有前端先行的临时定义可以短期写入 contract，并标注来源和替换时机。
 
 ## 当前状态
 

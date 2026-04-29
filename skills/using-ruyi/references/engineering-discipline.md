@@ -54,6 +54,7 @@
 | 用户说“继续”，看到 `.ruyi/` 后直接编辑上次记得的文件 | 先执行 using-ruyi Ritual，读取活动需求候选和路由判定表 |
 | 项目存在 `.ruyi/` 但 contract 不齐，先写代码再补 contract | 立即停止，回到 `ruyi-contract` 补齐并确认 |
 | Python 路由脚本不可用，于是凭感觉继续 | 按 `using-ruyi/SKILL.md` 的路由判定表直接读取 `.ruyi/` 推断 |
+| 加载 `using-ruyi` 后把所有 contract 读了一遍 | 只读 INDEX；路由到具体 feature 后才读对应 contract 正文 |
 
 ## 5. 最小自检
 
@@ -73,9 +74,29 @@
 
 当用户只说“继续”且没有提供 `module / feature / date` 时，agent 应先定位当前活动需求：
 
-1. 优先读取最近修改的 `.ruyi/contracts/`、`.ruyi/plans/`、`.ruyi/tasks/`、`.ruyi/tests/`、`.ruyi/explain/` 产物。
-2. 如果只有一个候选，继续检查该候选的下一阶段。
-3. 如果存在多个候选，停止正式执行，请用户确认要继续哪一个。
-4. 不允许凭聊天记忆直接假设当前需求。
+1. 优先读取 `.ruyi/INDEX.md`。
+2. INDEX 不存在时，只扫描 `.ruyi/contracts/`、`.ruyi/explain/` 的目录名，不读文件正文。
+3. 如果只有一个候选，继续检查该候选的下一阶段。
+4. 如果存在多个候选，停止正式执行，请用户确认要继续哪一个。
+5. 不允许凭聊天记忆直接假设当前需求。
 
 候选必须能解析出 `module / feature / date`。
+
+## 7. 具体反模式：过度读取
+
+### ❌ 加载 using-ruyi 后把所有 contract 读了一遍
+
+**触发场景**：用户说“修个 bug”，agent 为了“了解项目背景”读取了 `.ruyi/contracts/` 下所有文件。
+
+**为什么错**：
+
+- 浪费上下文，真实项目里可能放大 10 倍以上。
+- 增加误引用风险，agent 可能基于无关 contract 推理出错误背景。
+- 长对话更早触达上下文上限。
+
+**正确做法**：
+
+- 只读 INDEX。
+- 按 INDEX 的“业务目标”判断相关性。
+- 路由到具体 feature 后才读对应 contract 正文。
+- 其它 feature 的 contract 一律不读，除非用户明确指定跨 feature 引用。

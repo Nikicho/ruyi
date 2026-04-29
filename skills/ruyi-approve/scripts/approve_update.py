@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -60,6 +61,18 @@ def explain_path(project: Path, payload: dict[str, Any]) -> Path:
         / payload["feature"]
         / f"{payload['date']}.md"
     )
+
+
+def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str] | None:
@@ -191,12 +204,14 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
         frontmatter["condition"] = payload["condition"]
     new_text = render_frontmatter(frontmatter) + "\n" + body.strip() + "\n\n" + render_approval_section(payload)
     target.write_text(new_text, encoding="utf-8")
+    index_result = rebuild_index_if_available(project)
 
     return {
         "updated": True,
         "reason": None,
         "message": "审批结论已记录。",
         "path": str(target),
+        "index": index_result,
     }
 
 

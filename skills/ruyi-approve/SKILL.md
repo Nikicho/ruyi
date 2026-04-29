@@ -1,6 +1,6 @@
 ---
 name: ruyi-approve
-description: Use when a Ruyi development brief needs PM approval, rejection, conditional acceptance, or a decision about returning to contract, plan, coding, or test.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is approval. Handles PM approval, rejection, conditional acceptance, or return decisions to contract, plan, coding, or test.
 ---
 
 # Ruyi Approve

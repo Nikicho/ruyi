@@ -45,10 +45,12 @@ plans/<module>/<feature>/<contract-date>.md
 ## 输入依据
 ## 测试策略
 ## Task 拆分
+## 接口对接
 ## 实施顺序
 ## 写入范围
 ## 依赖与风险
 ## 完成条件
+## 修订记录
 ```
 
 ## 5. 规则
@@ -58,7 +60,18 @@ plans/<module>/<feature>/<contract-date>.md
 - plan 可以拆分多个 task，但不能改写 contract 的业务范围。
 - plan 中每个 task 条目必须说明目标、范围、写入边界和完成条件。
 - plan 必须说明主要写入范围，尤其是并行开发或多 task 场景。
+- 当 contract 存在 `## 接口范围` 且非空时，plan 必须包含 `## 接口对接`。
+- `## 接口对接` 只写前端对接策略，不抄完整接口字段表。
+- 类型 B 中途变更后，plan 必须追加 `## 修订记录`，说明哪些 task 保留、取代或新增。
 - contract 不足时，返回 contract 阶段，不在 plan 中隐式补业务需求。
+
+`## 接口对接` 推荐包含：
+
+- 调用层：新增、修改或复用哪个 service / api 函数。
+- 类型定义：生成或手写位置，临时定义来源。
+- Mock 策略：是否需要 mock、mock 文件位置、何时删除。
+- 错误处理：全局 interceptor、局部空态或 toast 策略。
+- 状态管理：是否缓存、使用哪个 store 或 hook。
 
 ## 6. 与 task 的关系
 

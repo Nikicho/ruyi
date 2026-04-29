@@ -61,8 +61,25 @@ tests/<module>/<feature>/<contract-date>.md
 - `failed` 必须包含失败项。
 - `failed` 或 `passed-with-notes` 必须包含风险或未覆盖项。
 - 验证失败时，不能进入正式 explain。
+- 类型 B 中途变更不新建日期 test；在原 test 文件追加 `## 修订验证`，记录新增或重跑的验证项。
+- 类型 C 语义变化必须新建日期 test，因为旧验证不再代表新业务定义。
 
-## 6. 与 workspace 的关系
+## 6. 修订验证
+
+类型 B 中途变更后，在原 test 文件末尾追加：
+
+```md
+## 修订验证
+
+### <YYYY-MM-DD> 修订验证
+
+- 变更来源：contract `## 修订记录` 第 N 条
+- 重跑项：...
+- 新增项：...
+- 结论：passed / passed-with-notes / failed
+```
+
+## 7. 与 workspace 的关系
 
 `tests/` 保存主流程正式验证结果。
 

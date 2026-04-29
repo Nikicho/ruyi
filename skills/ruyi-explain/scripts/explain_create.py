@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -117,6 +118,18 @@ def explain_path(project: Path, payload: dict[str, Any]) -> Path:
 
 def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
+
+
+def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
 
 
 def parse_frontmatter(path: Path) -> dict[str, str]:
@@ -247,11 +260,13 @@ def create_explain(project_path: str | Path, payload: dict[str, Any]) -> dict[st
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_explain(payload), encoding="utf-8")
+    index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "explain 已创建。",
         "path": str(target),
+        "index": index_result,
     }
 
 

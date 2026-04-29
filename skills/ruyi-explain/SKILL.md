@@ -1,6 +1,6 @@
 ---
 name: ruyi-explain
-description: Use when a completed Ruyi contract needs a PM-facing development brief, delivery explanation, verification summary, code quality brief, or implementation impact note.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is development brief. Handles PM-facing delivery explanation, verification summary, code quality brief, file architecture notes, and implementation impact.
 ---
 
 # Ruyi Explain

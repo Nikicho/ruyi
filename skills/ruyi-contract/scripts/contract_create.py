@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -47,6 +48,8 @@ def validate_payload(payload: dict[str, Any]) -> None:
         raise ValueError("acceptance must include at least one item")
     if not as_list(payload["test_cases"]):
         raise ValueError("test_cases must include at least one item")
+    if status == "confirmed" and size in ("standard", "large") and len(as_list(payload["test_cases"])) < 3:
+        raise ValueError("confirmed standard/large contract requires at least 3 test cases: happy path, boundary, and error/exception")
     if payload["type"] == "fix":
         fix_required = ("problem", "impact", "verification_direction")
         fix_missing = [key for key in fix_required if not payload.get(key)]
@@ -82,12 +85,28 @@ def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
+def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
+
+
 def render_contract(payload: dict[str, Any]) -> str:
     scope = as_list(payload.get("scope")) or ["待补充。"]
     acceptance = as_list(payload["acceptance"])
     test_cases = as_list(payload["test_cases"])
     out_of_scope = as_list(payload.get("out_of_scope")) or ["待补充。"]
     fix_section = ""
+    api_scope = as_list(payload.get("api_scope"))
+    api_section = "\n## 接口范围\n\n本次不涉及接口。\n"
+    if api_scope:
+        api_section = f"\n## 接口范围\n\n{bullet_list(api_scope)}\n"
     if payload["type"] == "fix":
         fix_section = f"""
 ## 修复事实
@@ -97,13 +116,22 @@ def render_contract(payload: dict[str, Any]) -> str:
 - 验证方向：{payload["verification_direction"]}
 """
 
+    frontmatter = {
+        "type": payload["type"],
+        "size": payload.get("size") or "standard",
+        "module": payload["module"],
+        "feature": payload["feature"],
+        "date": payload["date"],
+        "status": payload.get("status") or "draft",
+    }
+    if payload.get("superseded_by"):
+        frontmatter["superseded_by"] = payload["superseded_by"]
+    if payload.get("derived_from"):
+        frontmatter["derived_from"] = payload["derived_from"]
+    frontmatter_text = "\n".join(f"{key}: {value}" for key, value in frontmatter.items())
+
     return f"""---
-type: {payload["type"]}
-size: {payload.get("size") or "standard"}
-module: {payload["module"]}
-feature: {payload["feature"]}
-date: {payload["date"]}
-status: {payload.get("status") or "draft"}
+{frontmatter_text}
 ---
 
 # Contract：{payload["title"]}
@@ -129,6 +157,7 @@ status: {payload.get("status") or "draft"}
 - 所属模块：{payload["module"]}
 - 功能对象：{payload["feature"]}
 {fix_section}
+{api_section}
 
 ## 验收标准
 
@@ -163,11 +192,13 @@ def create_contract(project_path: str | Path, payload: dict[str, Any]) -> dict[s
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_contract(payload), encoding="utf-8")
+    index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "contract 已创建。",
         "path": str(target),
+        "index": index_result,
     }
 
 
@@ -187,6 +218,9 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--out-of-scope", action="append", default=[], help="Out-of-scope item")
     parser.add_argument("--acceptance", action="append", required=True, help="Acceptance criterion")
     parser.add_argument("--test-case", action="append", required=True, help="Natural-language test case")
+    parser.add_argument("--api-scope", action="append", default=[], help="API scope item for this contract")
+    parser.add_argument("--superseded-by", help="Replacement contract path/date for semantic amendments")
+    parser.add_argument("--derived-from", help="Source contract path for post-approval changes")
     parser.add_argument("--problem", help="Required for fix: observed problem")
     parser.add_argument("--impact", help="Required for fix: impact scope")
     parser.add_argument("--verification-direction", help="Required for fix: verification direction")
@@ -206,6 +240,9 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
         "out_of_scope": args.out_of_scope,
         "acceptance": args.acceptance,
         "test_cases": args.test_case,
+        "api_scope": args.api_scope,
+        "superseded_by": args.superseded_by,
+        "derived_from": args.derived_from,
         "problem": args.problem,
         "impact": args.impact,
         "verification_direction": args.verification_direction,

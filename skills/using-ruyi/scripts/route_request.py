@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 
-INTENTS = ("init", "contract", "plan", "implement", "test", "explain", "approve", "spec-evolve", "continue")
+INTENTS = ("init", "contract", "plan", "implement", "test", "explain", "approve", "spec-evolve", "continue", "amend")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 CONTRACT_READY_STATUSES = ("confirmed",)
@@ -197,17 +197,21 @@ def artifact_candidate_from_path(project: Path, path: Path) -> dict[str, str] | 
 
 
 def active_candidates(project: Path) -> list[dict[str, str]]:
+    index = project / ".ruyi" / "INDEX.md"
+    if index.is_file():
+        candidates = active_candidates_from_index(index)
+        if candidates:
+            return candidates
+
+    # INDEX 缺失时只使用目录名兜底，不读取产物正文。
     roots = [
         project / ".ruyi" / "contracts",
-        project / ".ruyi" / "plans",
-        project / ".ruyi" / "tasks",
-        project / ".ruyi" / "tests",
         project / ".ruyi" / "explain",
     ]
     files: list[Path] = []
     for root in roots:
         if root.is_dir():
-            files.extend(path for path in root.rglob("*.md") if path.is_file())
+            files.extend(path for path in root.glob("*/*/*.md") if path.is_file())
 
     seen: set[tuple[str, str, str]] = set()
     candidates: list[dict[str, str]] = []
@@ -221,6 +225,31 @@ def active_candidates(project: Path) -> list[dict[str, str]]:
         seen.add(key)
         candidates.append(candidate)
     return candidates
+
+
+def active_candidates_from_index(index: Path) -> list[dict[str, str]]:
+    candidates: list[dict[str, str]] = []
+    module = ""
+    feature = ""
+    latest_date = ""
+    for line in index.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("## 模块："):
+            module = stripped.split("：", 1)[1].strip()
+            feature = ""
+            latest_date = ""
+            continue
+        if stripped.startswith("### "):
+            if module and feature and latest_date:
+                candidates.append({"module": module, "feature": feature, "date": latest_date})
+            feature = stripped.removeprefix("### ").strip()
+            latest_date = ""
+            continue
+        if stripped.startswith("- ") and DATE_PATTERN.match(stripped[2:12]):
+            latest_date = stripped[2:12]
+    if module and feature and latest_date:
+        candidates.append({"module": module, "feature": feature, "date": latest_date})
+    return candidates[:5]
 
 
 def route_continue_without_identity(project: Path) -> dict[str, Any]:
@@ -258,6 +287,9 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
 
     if intent == "continue" and not has_stage_identity(payload):
         return route_continue_without_identity(project)
+
+    if intent == "amend":
+        return route("contract", ["amendment-classification-required"], "检测到中途变更意图，必须先按 A/B/C/D 分类并向用户确认。")
 
     if intent in ("init", "contract"):
         return route(intent, [], f"进入 {STAGE_SKILLS[intent]}。")

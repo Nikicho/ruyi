@@ -1,6 +1,6 @@
 ---
 name: ruyi-init
-description: Use when an existing frontend project needs to be initialized for Ruyi with .ruyi, .ruyirc, project spec anchors, project actions, and workspace placeholders.
+description: Use when an existing frontend project needs to be initialized for Ruyi. Common triggers: "接入Ruyi", "初始化Ruyi", "启用Ruyi", "init Ruyi", "setup Ruyi". Creates .ruyi, .ruyirc, project spec anchors, API spec placeholder, INDEX, CLAUDE.md reminder, Claude Code hook, and /ruyi fallback command.
 ---
 
 # Ruyi Init
@@ -34,11 +34,15 @@ description: Use when an existing frontend project needs to be initialized for R
 2. 判断初始化状态。
 3. 读取项目事实。
 4. 生成 `.ruyirc`。
-5. 生成 `.ruyi/spec/` 的 5 个锚点文件。
+5. 生成 `.ruyi/spec/` 的 5 个锚点文件和 `.ruyi/spec/api/README.md`。
 6. 创建 `contracts / plans / tasks / tests / explain / spec-candidates / workspace` 目录。
 7. 生成 `.ruyi/project-actions.md`。
-8. 更新 `.gitignore`。
-9. 输出结果。
+8. 生成 `.ruyi/INDEX.md` 新格式占位。
+9. 写入或合并 `.claude/settings.json` 的入口保护 hook。
+10. 创建或追加 `CLAUDE.md` 的 Ruyi 主流程激活段。
+11. 创建 `.claude/commands/ruyi.md` 手动兜底命令。
+12. 更新 `.gitignore`。
+13. 输出结果。
 
 ## 5. 脚本调用
 
@@ -78,6 +82,7 @@ description: Use when an existing frontend project needs to be initialized for R
 - `.ruyi/spec/frontend-baseline.md`
 - `.ruyi/spec/testing-baseline.md`
 - `.ruyi/spec/open-questions.md`
+- `.ruyi/spec/api/README.md`
 - `.ruyi/contracts/`
 - `.ruyi/plans/`
 - `.ruyi/tasks/`
@@ -86,11 +91,14 @@ description: Use when an existing frontend project needs to be initialized for R
 - `.ruyi/spec-candidates/`
 - `.ruyi/workspace/README.md`
 - `.ruyi/project-actions.md`
+- `.claude/commands/ruyi.md`
 
 允许追加：
 
 - `.gitignore` 中的 `.ruyi/workspace/**`
 - `.gitignore` 中的 `!.ruyi/workspace/README.md`
+- `.claude/settings.json` 中的 `hooks.UserPromptSubmit`
+- `CLAUDE.md` 中的 `## Ruyi 主流程激活` 段
 
 禁止：
 
@@ -98,6 +106,7 @@ description: Use when an existing frontend project needs to be initialized for R
 - 自动补齐不完整初始化。
 - 读取页面文件正文来推断业务。
 - 读取 team 层规范来决定初始化内容。
+- 在 hook 中执行业务路由或读取 `.ruyi/` 内容；hook 只能检测存在性并输出 reminder。
 
 ## 8. 必读参考
 

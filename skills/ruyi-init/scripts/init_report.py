@@ -76,6 +76,16 @@ def format_report(detect: dict[str, Any], write: dict[str, Any]) -> str:
 ## 待确认
 
 {bullet_list(write.get("notes", []))}
+
+## 入口保护
+
+- hook：`.claude/settings.json` 中的 UserPromptSubmit reminder。
+- 持久提示：`CLAUDE.md` 中的 Ruyi 主流程激活段。
+- 手动兜底：`.claude/commands/ruyi.md`，发现 agent 没走 Ruyi 时可输入 `/ruyi`。
+
+## API Spec 提示
+
+建议补充 `.ruyi/spec/api/api-source.md`，指向后端 Swagger / Apifox / Yapi / OpenAPI 等权威 API 文档。
 """
 
 

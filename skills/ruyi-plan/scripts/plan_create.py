@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -70,6 +71,34 @@ def validate_payload(payload: dict[str, Any]) -> None:
         raise ValueError("write_scope must include at least one item")
 
 
+def contract_requires_api_integration(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    text = path.read_text(encoding="utf-8")
+    marker = "## 接口范围"
+    start = text.find(marker)
+    if start == -1:
+        return False
+    body_start = text.find("\n", start)
+    if body_start == -1:
+        return False
+    next_heading = text.find("\n## ", body_start + 1)
+    body = text[body_start: next_heading if next_heading != -1 else None].strip()
+    return bool(body and "本次不涉及接口" not in body)
+
+
+def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
+    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
+    if not script.is_file():
+        return None
+    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
+    if spec is None or spec.loader is None:
+        return None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rebuild_index(project)
+
+
 def is_initialized(project: Path) -> bool:
     return (project / ".ruyirc").is_file() and (project / ".ruyi" / "plans").is_dir()
 
@@ -126,6 +155,7 @@ def numbered_list(items: list[str]) -> str:
 def render_plan(payload: dict[str, Any]) -> str:
     contract = f".ruyi/contracts/{payload['module']}/{payload['feature']}/{payload['date']}.md"
     risks = as_list(payload.get("risks")) or ["暂无。"]
+    api_integration = as_list(payload.get("api_integration")) or ["本次不涉及接口对接。"]
 
     return f"""---
 status: {payload["status"]}
@@ -152,6 +182,10 @@ date: {payload["date"]}
 ## Task 拆分
 
 {bullet_list(as_list(payload["tasks"]))}
+
+## 接口对接
+
+{bullet_list(api_integration)}
 
 ## 实施顺序
 
@@ -202,6 +236,14 @@ def create_plan(project_path: str | Path, payload: dict[str, Any]) -> dict[str, 
             "path": None,
             "contract": str(contract),
         }
+    if contract_requires_api_integration(contract) and not as_list(payload.get("api_integration")):
+        return {
+            "created": False,
+            "reason": "api-integration-required",
+            "message": "contract 存在接口范围，plan 必须包含接口对接策略。",
+            "path": None,
+            "contract": str(contract),
+        }
 
     target = plan_path(project, payload)
     if target.exists():
@@ -214,11 +256,13 @@ def create_plan(project_path: str | Path, payload: dict[str, Any]) -> dict[str, 
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_plan(payload), encoding="utf-8")
+    index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "plan 已创建。",
         "path": str(target),
+        "index": index_result,
     }
 
 
@@ -233,6 +277,7 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--goal", required=True, help="Implementation goal")
     parser.add_argument("--input", action="append", required=True, help="Plan input basis")
     parser.add_argument("--test-strategy", action="append", required=True, help="Test strategy item")
+    parser.add_argument("--api-integration", action="append", default=[], help="API integration strategy item")
     parser.add_argument("--task", action="append", required=True, help="Task breakdown item")
     parser.add_argument("--sequence", action="append", required=True, help="Implementation sequence item")
     parser.add_argument("--write-scope", action="append", required=True, help="Write scope item")
@@ -249,6 +294,7 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
         "goal": args.goal,
         "inputs": args.input,
         "test_strategy": args.test_strategy,
+        "api_integration": args.api_integration,
         "tasks": args.task,
         "sequence": args.sequence,
         "write_scope": args.write_scope,

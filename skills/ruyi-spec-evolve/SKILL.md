@@ -1,6 +1,6 @@
 ---
 name: ruyi-spec-evolve
-description: Use when completed Ruyi work should be distilled into project spec updates, team spec candidates, open questions, or frontend development knowledge.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is knowledge distillation. Handles project spec candidates, team spec candidates, open questions, and frontend development knowledge after approval.
 ---
 
 # Ruyi Spec Evolve

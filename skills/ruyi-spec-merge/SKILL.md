@@ -1,6 +1,6 @@
 ---
 name: ruyi-spec-merge
-description: Use when Ruyi spec candidates need periodic human review, merge previews, accepted/rejected decisions, or project spec updates outside the main feature delivery flow.
+description: Use when Ruyi spec candidates need periodic human review, merge previews, accepted/rejected decisions, or manual spec patch generation outside the main feature delivery flow.
 ---
 
 # Ruyi Spec Merge
@@ -8,24 +8,26 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 ## 1. 适用场景
 
 - 用户要求查看可合入的规范候选。
-- 用户要求把某个 spec-candidate 合入正式 spec。
+- 用户要求评审某个 `spec-candidate` 是否应该进入正式 spec。
 - 用户要求拒绝、取代或归档候选。
 
 ## 2. 硬门禁
 
 - 项目必须已初始化。
 - 只能处理 `.ruyi/spec-candidates/` 中的候选。
-- 合入正式 spec 前必须展示 diff/预览并获得用户确认。
+- 合入前必须展示预览，并获得用户确认。
+- `merged` 不直接写正式 spec，只生成 `.ruyi/spec-patches/` 下的人工合入 patch。
 - 不自动写入 team 层。
-- 不属于单次需求主流程。
+- 该 skill 不属于单次需求主流程。
 
 ## 3. 执行步骤
 
 1. 读取 `references/spec-merge-protocol.md`。
 2. 使用 `merge_list.py` 列出 pending candidates。
-3. 使用 `merge_diff.py` 预览候选会如何影响目标 spec。
-4. 用户确认后，使用 `merge_apply.py` 合入、拒绝或标记为已被取代。
-5. 合入后候选进入 `.ruyi/spec-archive/merged/`；拒绝后进入 `.ruyi/spec-archive/rejected/`；被新候选取代后进入 `.ruyi/spec-archive/superseded/`。
+3. 使用 `merge_diff.py` 预览 candidate 对目标 spec 的影响。
+4. 用户确认后，使用 `merge_apply.py` 标记为 `merged`、`rejected` 或 `superseded`。
+5. `merged` 会生成 patch 并归档到 `.ruyi/spec-archive/merged/`；`rejected` 归档到 `.ruyi/spec-archive/rejected/`；`superseded` 归档到 `.ruyi/spec-archive/superseded/`。
+6. 用户或维护者后续手动打开 patch，把真正可长期复用的内容合入正式 spec。
 
 ## 4. 脚本调用
 
@@ -42,3 +44,4 @@ python <skills-dir>/ruyi-spec-merge/scripts/merge_apply.py --project <project> -
 - `references/spec-candidate-schema.md`
 - `references/spec-merge-protocol.md`
 - `references/spec-evolution-discipline.md`
+- `references/merge-discipline.md`

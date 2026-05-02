@@ -1,4 +1,4 @@
-﻿# Spec Candidate Schema
+# Spec Candidate Schema
 
 ## 1. 对象定位
 
@@ -29,7 +29,7 @@ spec-candidates/<module>/<feature>/<contract-date>.md
 状态允许：
 
 - `pending`：待人工确认。
-- `merged`：已合入正式 spec。
+- `merged`：已通过评审，并生成手动合入 patch。
 - `rejected`：已拒绝。
 - `superseded`：已被其他候选取代。
 
@@ -55,5 +55,6 @@ spec-candidates/<module>/<feature>/<contract-date>.md
 - 不允许把 contract、test、explain 原文搬运进候选。
 - 候选必须说明适用范围。
 - 候选必须说明哪些内容不应沉淀。
+- 同一模块、同一功能、同一目标 spec 的新 pending candidate 会自动取代旧 pending candidate。
 - team 层内容只形成候选，不自动写入 `.ruyi-team`。
-- 候选合入正式 spec 只能通过 `ruyi-spec-merge` 的人工确认流程执行。
+- 候选合入正式 spec 只能通过 `ruyi-spec-merge` 生成 patch 后由用户或维护者人工执行。

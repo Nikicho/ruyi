@@ -11,6 +11,7 @@ from typing import Any
 
 
 TARGET_LAYERS = ("project", "team")
+PENDING_STATUSES = ("pending", "candidate", "")
 TARGET_SPECS = (
     "project-overview.md",
     "project-structure.md",
@@ -107,6 +108,27 @@ def parse_frontmatter(text: str) -> dict[str, str] | None:
     return data
 
 
+def parse_frontmatter_text(text: str) -> tuple[dict[str, str], str]:
+    if not text.startswith("---\n"):
+        return {}, text
+
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        return {}, text
+
+    data: dict[str, str] = {}
+    for line in text[4:end].splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        data[key.strip()] = value.strip()
+    return data, text[end + len("\n---\n") :]
+
+
+def render_frontmatter(data: dict[str, str]) -> str:
+    return "---\n" + "\n".join(f"{key}: {value}" for key, value in data.items()) + "\n---\n"
+
+
 def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
@@ -160,6 +182,38 @@ status: pending
 
 {bullet_list(open_questions)}
 """
+
+
+def supersede_existing_candidates(project: Path, payload: dict[str, Any], new_target: Path) -> list[str]:
+    root = project / ".ruyi" / "spec-candidates" / payload["module"] / payload["feature"]
+    if not root.is_dir():
+        return []
+
+    superseded: list[str] = []
+    candidates_root = project / ".ruyi" / "spec-candidates"
+    rel_new = new_target.relative_to(candidates_root).as_posix()
+    for candidate in sorted(root.glob("*.md")):
+        if candidate == new_target or candidate.name == "EXPECTED.md":
+            continue
+
+        frontmatter, body = parse_frontmatter_text(candidate.read_text(encoding="utf-8"))
+        if frontmatter.get("status", "pending") not in PENDING_STATUSES:
+            continue
+        if frontmatter.get("target_layer") != payload["target_layer"]:
+            continue
+        if frontmatter.get("target_spec") != payload["target_spec"]:
+            continue
+
+        frontmatter["status"] = "superseded"
+        frontmatter["superseded_by"] = rel_new
+        frontmatter["supersede_reason"] = "newer candidate created for same target spec"
+        archive = project / ".ruyi" / "spec-archive" / "superseded" / candidate.relative_to(candidates_root)
+        archive.parent.mkdir(parents=True, exist_ok=True)
+        archive.write_text(render_frontmatter(frontmatter) + "\n" + body.lstrip(), encoding="utf-8")
+        candidate.unlink()
+        superseded.append(str(archive))
+
+    return superseded
 
 
 def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -217,12 +271,14 @@ def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_candidate(payload), encoding="utf-8")
+    superseded = supersede_existing_candidates(project, payload, target)
     index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "spec candidate 已创建。",
         "path": str(target),
+        "superseded": superseded,
         "index": index_result,
     }
 

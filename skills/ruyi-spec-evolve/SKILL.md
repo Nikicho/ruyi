@@ -17,7 +17,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 没有结果依据，不进入知识沉淀。
 - 没有 explain 或等价结果依据，不进入正式沉淀。
 - 不允许把 `contract / task / explain / project-actions / workspace` 原样转成 spec。
-- 首版不自动回写 team 层。
+- 不自动回写 team 层。
 
 ## 3. 执行原则
 
@@ -26,6 +26,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - team 层升级更谨慎。
 - 只更新相关章节，不大面积改写 spec。
 - 允许保留少量高价值技术碎片，但要精，不要多。
+- 同一模块、同一功能、同一目标 spec 出现新 candidate 时，旧 pending candidate 应自动标记为 `superseded` 并归档。
 
 ## 4. 执行步骤
 
@@ -43,6 +44,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 生成 `.ruyi/spec-candidates/<module>/<feature>/<contract-date>.md`。
 - 候选可以指向项目层 spec，也可以作为 team 层候选。
 - 不自动改写 `.ruyi/spec/*.md`。
+- 如果新候选取代旧候选，旧候选进入 `.ruyi/spec-archive/superseded/`。
 
 ## 6. 脚本调用
 
@@ -57,7 +59,8 @@ python <skills-dir>/ruyi-spec-evolve/scripts/candidate_create.py --project <proj
 - 校验项目已初始化。
 - 校验 explain 存在且 `approval: approved`。
 - 写入 `.ruyi/spec-candidates/<module>/<feature>/<contract-date>.md`。
-- 不覆盖已有候选。
+- 不覆盖同日期已有候选。
+- 对同一目标的新候选自动归档旧 pending candidate 为 `superseded`。
 - 不改写正式 spec。
 
 ## 7. 必读参考

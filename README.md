@@ -100,6 +100,8 @@ Ruyi 固定主流程：
 .ruyirc
 .ruyi/
 ├── spec/
+│   ├── docs-registry.md
+│   ├── interview-bank.md
 │   └── api/
 ├── contracts/
 ├── plans/
@@ -120,6 +122,8 @@ CLAUDE.md
 其中：
 
 - `spec/`：项目长期有效事实和规范。
+- `spec/docs-registry.md`：成熟项目接入时保留下来的高价值外部文档入口。
+- `spec/interview-bank.md`：init 和后续 contract 阶段确认过的项目关键问卷答案。
 - `spec/api/`：长期 API 约定和外部权威 API 文档入口，不维护完整接口列表。
 - `contracts/`：某次需求的设计与验收定义。
 - `plans/`：围绕 contract 的开发计划、测试策略和 task 拆分。
@@ -151,6 +155,8 @@ Ruyi 初始化后会部署三层入口保护：
 - `.claude/commands/ruyi.md`：提供 `/ruyi` 手动兜底命令。
 
 如果发现 agent 没有走 Ruyi 流程，可以输入 `/ruyi` 强制激活。
+
+成熟项目接入时，Ruyi 不倒灌历史 contract。`ruyi-init` 提供两种方式：快速开始只启用流程，历史知识后续按需补；完整迁移会蒸馏现有文档并澄清关键问题，生成项目知识基线。
 
 ## 安装
 

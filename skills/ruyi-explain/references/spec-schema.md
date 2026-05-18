@@ -13,6 +13,8 @@
 - `frontend-baseline.md`
 - `testing-baseline.md`
 - `open-questions.md`
+- `docs-registry.md`
+- `interview-bank.md`
 - `api/README.md`
 
 项目层 `.ruyi/spec/api/` 用于长期 API 约定和外部权威源入口，不维护完整接口列表。建议包含：
@@ -25,14 +27,35 @@
 
 禁止把完整 Swagger JSON、完整接口字段表、临时 mock 数据放入 `spec/api/`。Ruyi 只引用 API 权威源，不重新维护后端 API 文档。
 
-## 3. 章节规则
+## 3. Confidence frontmatter
+
+所有 spec 文件必须带 confidence frontmatter：
+
+```yaml
+---
+confidence: observed | distilled | claimed | open | confirmed_by_user
+source: <来源描述>
+verified_at: <YYYY-MM-DD>
+needs_review: true | false
+---
+```
+
+| confidence | 含义 | 引用规则 |
+| --- | --- | --- |
+| `observed` | 从代码 / 配置 / 文件结构观察到的硬事实 | 可直接引用 |
+| `confirmed_by_user` | 用户在澄清问卷或对话中明确确认 | 可直接引用 |
+| `distilled` | 从外部文档蒸馏出的关键事实 | 引用前提示用户复核 |
+| `claimed` | 文档声称但未验证 | contract 阶段二次确认 |
+| `open` | 知识缺口 | 不能作为事实引用，遇到必须问用户 |
+
+## 4. 章节规则
 
 - 合并最小单位是章节。
 - 合并键是 `文件名 + 标题路径`。
 - 标题层级限制为 `#`、`##`、`###`。
 - 标题应表达稳定主题，避免临时结论式命名。
 
-## 4. 合并规则
+## 5. 合并规则
 
 支持：
 
@@ -43,7 +66,7 @@
 
 首版不支持显式删除。
 
-## 5. 演进规则
+## 6. 演进规则
 
 - 项目事实和长期规则进入 `spec`。
 - 一次性需求内容进入 `contract`。

@@ -13,6 +13,8 @@ SPEC_FILES = (
     "frontend-baseline.md",
     "testing-baseline.md",
     "open-questions.md",
+    "docs-registry.md",
+    "interview-bank.md",
     "api/README.md",
 )
 

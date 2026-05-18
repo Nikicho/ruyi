@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
+from datetime import date
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from common import (
@@ -83,13 +84,28 @@ def project_index() -> str:
 """
 
 
+def today() -> str:
+    return date.today().isoformat()
+
+
+def frontmatter(confidence: str, source: str, *, needs_review: bool = False) -> str:
+    extra = "\nneeds_review: true" if needs_review else ""
+    return f"""---
+confidence: {confidence}
+source: {source}
+verified_at: {today()}{extra}
+---
+
+"""
+
+
 def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
     modules = facts.get("module_candidates") or []
     tests = facts.get("test_signals") or []
     questions = facts.get("open_questions") or []
 
-    return {
-        "project-overview.md": f"""# 项目概览
+    contents = {
+        "project-overview.md": frontmatter("observed", "init 项目事实读取") + f"""# 项目概览
 
 ## 技术栈
 
@@ -101,13 +117,13 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 待补充。
 """,
-        "project-structure.md": f"""# 项目结构
+        "project-structure.md": frontmatter("observed", "init 项目目录扫描") + f"""# 项目结构
 
 ## 初步模块候选
 
 {format_list(modules) if modules else "待确认。"}
 """,
-        "frontend-baseline.md": """# 前端基线
+        "frontend-baseline.md": frontmatter("open", "init 占位", needs_review=True) + """# 前端基线
 
 ## 框架约定
 
@@ -117,17 +133,17 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 待补充。
 """,
-        "testing-baseline.md": f"""# 测试基线
+        "testing-baseline.md": frontmatter("observed" if tests else "open", "init package.json 检测", needs_review=not bool(tests)) + f"""# 测试基线
 
 ## 已识别测试信号
 
 {format_list(tests) if tests else "待确认。"}
 """,
-        "open-questions.md": f"""# 待确认问题
+        "open-questions.md": frontmatter("open", "init 待确认问题", needs_review=True) + f"""# 待确认问题
 
 {format_list(questions) if questions else "暂无。"}
 """,
-        "api/README.md": """# API 相关 Spec
+        "api/README.md": frontmatter("open", "init API 占位", needs_review=True) + """# API 相关 Spec
 
 本目录维护项目层长期 API 约定。**不维护完整接口列表**，权威源是后端。
 
@@ -142,10 +158,214 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 Ruyi 只引用 API 权威源，不拷贝完整 Swagger / OpenAPI / Apifox 字段表。
 """,
     }
+    if is_full_migration(facts):
+        contents["docs-registry.md"] = docs_registry(facts)
+        contents["interview-bank.md"] = interview_bank(facts)
+    return contents
 
 
 def format_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
+
+
+def brownfield_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    value = facts.get("brownfield")
+    return value if isinstance(value, dict) else {}
+
+
+def brownfield_mode(facts: dict[str, Any]) -> str:
+    mode = str(brownfield_facts(facts).get("mode") or "quick-start").strip().lower()
+    return "full-migration" if mode in ("full", "full-migration", "migration", "complete") else "quick-start"
+
+
+def is_full_migration(facts: dict[str, Any]) -> bool:
+    return brownfield_mode(facts) == "full-migration"
+
+
+def document_sources(facts: dict[str, Any]) -> list[dict[str, Any]]:
+    items = brownfield_facts(facts).get("document_sources") or []
+    return [item for item in items if isinstance(item, dict)]
+
+
+def quality_of(source: dict[str, Any]) -> str:
+    return str(source.get("quality") or source.get("decision") or "unreviewed").lower()
+
+
+def useful_sources(facts: dict[str, Any]) -> list[dict[str, Any]]:
+    return [item for item in document_sources(facts) if quality_of(item) in ("useful", "high", "medium")]
+
+
+def partial_sources(facts: dict[str, Any]) -> list[dict[str, Any]]:
+    return [item for item in document_sources(facts) if quality_of(item) in ("partial", "distill", "low")]
+
+
+def discarded_sources(facts: dict[str, Any]) -> list[dict[str, Any]]:
+    return [item for item in document_sources(facts) if quality_of(item) in ("discard", "garbage", "deprecated")]
+
+
+def docs_registry(facts: dict[str, Any]) -> str:
+    sources = useful_sources(facts)
+    sections = []
+    for source in sources:
+        title = source.get("title") or source.get("path") or "未命名文档"
+        category = source.get("category") or "项目文档"
+        path = source.get("url") or source.get("path") or "待补充"
+        content = source.get("content") or source.get("summary") or "待补充。"
+        usage = source.get("recommended_usage") or source.get("usage") or "按需查阅，引用前结合当前代码判断。"
+        sections.append(
+            f"""## {category}
+
+### {title}
+- 链接：{path}
+- 内容：{content}
+- 推荐用法：{usage}
+"""
+        )
+
+    body = "\n".join(sections) if sections else "暂无已确认仍有参考价值的外部文档入口。\n"
+    return frontmatter("confirmed_by_user" if sources else "open", "init 文档评估", needs_review=not bool(sources)) + f"""# 项目外部文档入口
+
+> 只记录已评估并确认仍有参考价值的入口；陈旧 / 已废文档不录入。
+> 完整评估痕迹见 `.ruyi/workspace/init-evaluation-notes.md`。
+
+{body}"""
+
+
+def interview_bank(facts: dict[str, Any]) -> str:
+    answers = brownfield_facts(facts).get("interview_answers") or {}
+    if not isinstance(answers, dict) or not answers:
+        return frontmatter("open", "init 澄清问卷", needs_review=True) + """# 澄清问卷答案
+
+暂无已确认问卷答案。
+"""
+
+    sections = []
+    for topic, values in answers.items():
+        sections.append(f"## {topic}")
+        if isinstance(values, dict):
+            for key, value in values.items():
+                sections.append(f"- {key}：{value}")
+        else:
+            sections.append(f"- {values}")
+        sections.append("")
+    return frontmatter("confirmed_by_user", "init 澄清问卷") + "# 澄清问卷答案\n\n" + "\n".join(sections)
+
+
+def evaluation_notes(facts: dict[str, Any]) -> str:
+    registered = useful_sources(facts)
+    partial = partial_sources(facts)
+    discarded = discarded_sources(facts)
+
+    def source_lines(items: list[dict[str, Any]], empty: str) -> str:
+        if not items:
+            return empty
+        lines: list[str] = []
+        for item in items:
+            path = item.get("path") or item.get("url") or "未知来源"
+            reason = item.get("reason") or item.get("summary") or item.get("content") or "未填写评估说明。"
+            lines.append(f"### {path}\n- 评估：{reason}")
+            if item.get("distilled_to"):
+                lines.append(f"- 蒸馏目标：spec/{item['distilled_to']}")
+        return "\n\n".join(lines)
+
+    return f"""# Init 评估笔记（{today()}）
+
+> 一次性记录，不进 agent 默认上下文。仅供后续 init 复盘或团队回顾。
+
+## 已录入 docs-registry（{len(registered)} 条）
+
+{source_lines(registered, "暂无。")}
+
+## 已蒸馏关键事实进 spec（{len(partial)} 条）
+
+{source_lines(partial, "暂无。")}
+
+## 未录入也未蒸馏（{len(discarded)} 条）
+
+{source_lines(discarded, "暂无。")}
+"""
+
+
+def distilled_specs(facts: dict[str, Any]) -> dict[str, str]:
+    if not is_full_migration(facts):
+        return {}
+    specs: dict[str, str] = {}
+    for source in partial_sources(facts):
+        facts_list = source.get("distilled_facts") or []
+        if not facts_list:
+            continue
+        target = safe_distilled_target(source.get("distilled_to"))
+        title = source.get("title") or source.get("path") or "文档蒸馏"
+        specs[target] = frontmatter(
+            "distilled",
+            "init 文档蒸馏",
+            needs_review=True,
+        ) + f"""# {title}（从文档蒸馏）
+
+## 当前事实 / 待复核事实
+
+{format_list([str(item) for item in facts_list])}
+"""
+    return specs
+
+
+def safe_distilled_target(value: Any) -> str:
+    raw = str(value or "brownfield-distilled.md").replace("\\", "/").lstrip("/")
+    target = PurePosixPath(raw)
+    if not target.parts or any(part in ("", ".", "..") for part in target.parts):
+        return "brownfield-distilled.md"
+    if target.suffix != ".md":
+        return "brownfield-distilled.md"
+    return target.as_posix()
+
+
+def unknown_answer_count(facts: dict[str, Any]) -> int:
+    value = brownfield_facts(facts).get("unknown_answers") or 0
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def fallback_required(facts: dict[str, Any]) -> bool:
+    if not is_full_migration(facts):
+        return False
+    brownfield = brownfield_facts(facts)
+    return bool(brownfield.get("fallback")) or unknown_answer_count(facts) >= 3
+
+
+def fallback_specs() -> dict[str, str]:
+    return {
+        "auth-flow.md": frontmatter("open", "init fallback", needs_review=True) + """# 鉴权流程
+
+待确认。init 阶段未能确认当前项目鉴权方式。
+agent 在涉及鉴权的 contract / implement 阶段必须先询问。
+""",
+        "error-handling.md": frontmatter("open", "init fallback", needs_review=True) + """# 错误处理
+
+待确认。init 阶段未能确认当前项目错误处理约定。
+agent 在涉及接口、异常提示或状态处理时必须先询问。
+""",
+        "routing-conventions.md": frontmatter("open", "init fallback", needs_review=True) + """# 路由约定
+
+待确认。init 阶段未能确认当前项目路由组织方式。
+agent 在新增页面、权限或导航逻辑前必须先询问。
+""",
+    }
+
+
+def brownfield_result(facts: dict[str, Any]) -> dict[str, Any]:
+    if not is_full_migration(facts):
+        return {"mode": "quick-start"}
+    return {
+        "mode": "full-migration",
+        "registered_docs": [str(item.get("path") or item.get("url") or item.get("title")) for item in useful_sources(facts)],
+        "distilled_docs": [str(item.get("path") or item.get("title")) for item in partial_sources(facts) if item.get("distilled_facts")],
+        "interview_answer_count": sum(len(value) if isinstance(value, dict) else 1 for value in (brownfield_facts(facts).get("interview_answers") or {}).values()),
+        "open_topics": brownfield_facts(facts).get("open_topics") or [],
+        "fallback": fallback_required(facts),
+        "evaluation_notes": ".ruyi/workspace/init-evaluation-notes.md",
+    }
 
 
 def create_dir(project: Path, relative: str, created: list[str], skipped: list[str]) -> None:
@@ -282,6 +502,17 @@ def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any
     for filename, content in spec_contents(facts).items():
         create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
 
+    for filename, content in distilled_specs(facts).items():
+        create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
+
+    if fallback_required(facts):
+        for filename, content in fallback_specs().items():
+            create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
+        notes.append("知识基线非常薄弱：本次 init 只记录 observed/open 事实，后续 contract 阶段必须更仔细澄清。")
+
+    if is_full_migration(facts):
+        create_file(project, ".ruyi/workspace/init-evaluation-notes.md", evaluation_notes(facts), created, skipped)
+
     if not facts.get("no_hook"):
         merge_claude_settings(project, skipped, updated, notes)
     else:
@@ -301,6 +532,7 @@ def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any
         "skipped": skipped,
         "updated": updated,
         "notes": notes,
+        "brownfield": brownfield_result(facts),
     }
 
 

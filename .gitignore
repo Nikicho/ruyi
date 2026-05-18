@@ -10,6 +10,7 @@ fixtures/
 skills/*/scripts/tests/
 docs/ruyi-skill-authoring.md
 docs/superpowers-origin.md
+design/
 
 *.log
 *.err.log

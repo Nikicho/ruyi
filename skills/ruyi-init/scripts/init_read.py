@@ -43,6 +43,78 @@ STORE_DIRS = ("src/store", "src/stores", "src/pinia", "src/vuex", "store", "stor
 API_DIRS = ("src/api", "src/apis", "api", "apis")
 SERVICE_DIRS = ("src/service", "src/services", "service", "services")
 MODULE_ROOTS = ("src/views", "src/pages", "src/modules", "src/module", "views", "pages", "modules", "module")
+DOCUMENT_ROOT_FILES = (
+    "README.md",
+    "README.zh.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+)
+DOCUMENT_DIRS = ("docs", "mock")
+DOCUMENT_SUFFIXES = (".md", ".mdx", ".txt", ".yaml", ".yml", ".json")
+DOCUMENT_SAMPLE_LIMIT = 1200
+
+INIT_INTERVIEW_QUESTIONS = (
+    {
+        "key": "auth.method",
+        "topic": "鉴权流程",
+        "question": "鉴权方式？",
+        "options": ["JWT", "Session", "OAuth", "其它", "不知道"],
+    },
+    {
+        "key": "auth.token_storage",
+        "topic": "鉴权流程",
+        "question": "token 存在哪里？",
+        "options": ["localStorage", "cookie", "memory", "其它", "不知道"],
+    },
+    {
+        "key": "auth.refresh",
+        "topic": "鉴权流程",
+        "question": "token 刷新机制？",
+        "options": ["refresh token", "重新登录", "无刷新", "其它", "不知道"],
+    },
+    {
+        "key": "auth.failure",
+        "topic": "鉴权流程",
+        "question": "鉴权失败后怎么处理？",
+        "options": ["跳登录页", "弹窗提示", "静默刷新", "其它", "不知道"],
+    },
+    {
+        "key": "error.response_envelope",
+        "topic": "错误处理",
+        "question": "接口是否有统一响应结构？",
+        "options": ["是", "否", "部分接口有", "不知道"],
+    },
+    {
+        "key": "error.code_field",
+        "topic": "错误处理",
+        "question": "业务错误码字段？",
+        "options": ["code", "errCode", "status", "其它", "不知道"],
+    },
+    {
+        "key": "error.success_rule",
+        "topic": "错误处理",
+        "question": "业务成功判定？",
+        "options": ["code === 0", "success === true", "HTTP 2xx", "其它", "不知道"],
+    },
+    {
+        "key": "routing.mode",
+        "topic": "路由约定",
+        "question": "路由主要如何组织？",
+        "options": ["集中 routes 文件", "模块内路由", "文件路由", "其它", "不知道"],
+    },
+    {
+        "key": "routing.auth_guard",
+        "topic": "路由约定",
+        "question": "路由权限在哪里处理？",
+        "options": ["全局 guard", "页面内判断", "后端菜单", "其它", "不知道"],
+    },
+    {
+        "key": "routing.layout",
+        "topic": "路由约定",
+        "question": "布局如何绑定路由？",
+        "options": ["父路由 layout", "页面组件自带", "动态 layout", "其它", "不知道"],
+    },
+)
 
 
 def existing_files(project: Path, candidates: tuple[str, ...]) -> list[str]:
@@ -90,6 +162,40 @@ def module_candidates(project: Path) -> list[str]:
             if child.is_dir():
                 candidates.add(child.relative_to(project).as_posix())
     return sorted(candidates)
+
+
+def document_candidates(project: Path) -> list[dict[str, Any]]:
+    candidates: list[Path] = []
+    for name in DOCUMENT_ROOT_FILES:
+        path = project / name
+        if path.is_file():
+            candidates.append(path)
+
+    for directory in DOCUMENT_DIRS:
+        root = project / directory
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob("*")):
+            if path.is_file() and path.suffix.lower() in DOCUMENT_SUFFIXES:
+                candidates.append(path)
+
+    items: list[dict[str, Any]] = []
+    for path in sorted(set(candidates), key=lambda item: item.relative_to(project).as_posix()):
+        try:
+            sample = path.read_text(encoding="utf-8", errors="replace")[:DOCUMENT_SAMPLE_LIMIT]
+        except OSError:
+            sample = ""
+        stat = path.stat()
+        items.append(
+            {
+                "path": path.relative_to(project).as_posix(),
+                "size": stat.st_size,
+                "modified_at": int(stat.st_mtime),
+                "sample": sample,
+                "quality": "unreviewed",
+            }
+        )
+    return items
 
 
 def detect_test_signals(package: dict[str, Any]) -> list[str]:
@@ -152,6 +258,13 @@ def read_project(project_path: str | Path) -> dict[str, Any]:
         "test_signals": tests,
         "project_tree": list_tree(project, max_depth=3),
         "open_questions": questions,
+        "brownfield": {
+            "document_sources": document_candidates(project),
+            "interview_questions": list(INIT_INTERVIEW_QUESTIONS),
+            "interview_answers": {},
+            "open_topics": [],
+            "unknown_answers": 0,
+        },
     }
 
 

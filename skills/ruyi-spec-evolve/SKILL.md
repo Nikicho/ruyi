@@ -26,7 +26,8 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - team 层升级更谨慎。
 - 只更新相关章节，不大面积改写 spec。
 - 允许保留少量高价值技术碎片，但要精，不要多。
-- 同一模块、同一功能、同一目标 spec 出现新 candidate 时，旧 pending candidate 应自动标记为 `superseded` 并归档。
+- spec-candidate 是本地临时层，默认不提交 git；正式 spec 只有一份当前真相。
+- candidate 路径跟随目标 spec 路径，不按日期生成版本目录。
 
 ## 4. 执行步骤
 
@@ -41,26 +42,26 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 
 ## 5. 产物要求
 
-- 生成 `.ruyi/spec-candidates/<module>/<feature>/<contract-date>.md`。
+- 生成 `.ruyi/spec-candidates/<target-layer>/<target-spec-path>`。
 - 候选可以指向项目层 spec，也可以作为 team 层候选。
 - 不自动改写 `.ruyi/spec/*.md`。
-- 如果新候选取代旧候选，旧候选进入 `.ruyi/spec-archive/superseded/`。
+- candidate 只作为待确认信号；冲突时正式 spec 胜出。
 
 ## 6. 脚本调用
 
 确认 explain 已审批通过，并且确实有可复用内容后，可以使用脚本生成候选：
 
 ```bash
-python <skills-dir>/ruyi-spec-evolve/scripts/candidate_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --target-layer <project|team> --target-spec <spec-file> --proposal <item> --evidence <item> --scope <item>
+python <skills-dir>/ruyi-spec-evolve/scripts/candidate_create.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --title <title> --target-layer <project|team> --target-spec <spec-file-or-reference-path> --proposal <item> --evidence <item> --scope <item>
 ```
 
 脚本职责：
 
 - 校验项目已初始化。
 - 校验 explain 存在且 `approval: approved`。
-- 写入 `.ruyi/spec-candidates/<module>/<feature>/<contract-date>.md`。
-- 不覆盖同日期已有候选。
-- 对同一目标的新候选自动归档旧 pending candidate 为 `superseded`。
+- 写入 `.ruyi/spec-candidates/<target-layer>/<target-spec-path>`。
+- 不覆盖已有本地候选。
+- 不使用日期做 candidate 版本路径。
 - 不改写正式 spec。
 
 ## 7. 必读参考

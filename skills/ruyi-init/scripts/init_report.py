@@ -14,6 +14,47 @@ def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
+def brownfield_section(write: dict[str, Any]) -> str:
+    data = write.get("brownfield") or {}
+    if not isinstance(data, dict):
+        return ""
+    if data.get("mode") == "quick-start":
+        return """
+## 成熟项目接入摘要
+
+- 接入方式：快速开始
+"""
+
+    fallback = "是" if data.get("fallback") else "否"
+    return f"""
+## 成熟项目接入摘要
+
+### 已录入入口
+
+{bullet_list(data.get("registered_docs", []))}
+
+### 已蒸馏来源
+
+{bullet_list(data.get("distilled_docs", []))}
+
+### 已确认问卷答案
+
+- {data.get("interview_answer_count", 0)} 条
+
+### 仍开放的关键问题
+
+{bullet_list(data.get("open_topics", []))}
+
+### 兜底模式
+
+- {fallback}
+
+### 评估笔记
+
+- {data.get("evaluation_notes") or ".ruyi/workspace/init-evaluation-notes.md"}
+"""
+
+
 def format_report(detect: dict[str, Any], write: dict[str, Any]) -> str:
     if not detect.get("supported", False):
         return f"""# Ruyi 初始化结果
@@ -76,6 +117,7 @@ def format_report(detect: dict[str, Any], write: dict[str, Any]) -> str:
 ## 待确认
 
 {bullet_list(write.get("notes", []))}
+{brownfield_section(write)}
 
 ## 入口保护
 

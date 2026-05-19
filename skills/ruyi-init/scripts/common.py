@@ -8,18 +8,27 @@ from pathlib import Path
 FRONTEND_ROOT_FILES = ("package.json",)
 
 SPEC_FILES = (
+    "INDEX.md",
     "project-overview.md",
     "project-structure.md",
-    "frontend-baseline.md",
+    "development-baseline.md",
+    "coding-baseline.md",
     "testing-baseline.md",
+    "api.md",
     "open-questions.md",
-    "api/README.md",
+)
+
+FULL_MIGRATION_SPEC_FILES = (
+    "docs-registry.md",
+    "interview-bank.md",
 )
 
 REQUIRED_RUYI_DIRS = (
     ".ruyi",
     ".ruyi/spec",
-    ".ruyi/spec/api",
+    ".ruyi/spec/references",
+    ".ruyi/spec/references/shared",
+    ".ruyi/spec/references/modules",
     ".ruyi/contracts",
     ".ruyi/plans",
     ".ruyi/tasks",
@@ -27,6 +36,7 @@ REQUIRED_RUYI_DIRS = (
     ".ruyi/explain",
     ".ruyi/spec-candidates",
     ".ruyi/spec-archive",
+    ".ruyi/spec-patches",
     ".ruyi/workspace",
 )
 
@@ -45,6 +55,9 @@ REQUIRED_RUYI_FILES = (
 WORKSPACE_GITIGNORE_RULES = (
     ".ruyi/workspace/**",
     "!.ruyi/workspace/README.md",
+    ".ruyi/spec-candidates/**",
+    ".ruyi/spec-archive/**",
+    ".ruyi/spec-patches/**",
 )
 
 

@@ -42,6 +42,7 @@ skills/
 ├── ruyi-test/
 ├── ruyi-explain/
 ├── ruyi-approve/
+├── ruyi-spec-discover/
 ├── ruyi-spec-evolve/
 └── ruyi-spec-merge/
 ```
@@ -100,13 +101,27 @@ Ruyi 固定主流程：
 .ruyirc
 .ruyi/
 ├── spec/
-│   └── api/
+│   ├── INDEX.md
+│   ├── project-overview.md
+│   ├── project-structure.md
+│   ├── development-baseline.md
+│   ├── coding-baseline.md
+│   ├── testing-baseline.md
+│   ├── api.md
+│   ├── open-questions.md
+│   ├── docs-registry.md
+│   ├── interview-bank.md
+│   └── references/
+│       ├── shared/
+│       └── modules/
 ├── contracts/
 ├── plans/
 ├── tasks/
 ├── tests/
 ├── explain/
-├── spec-candidates/
+├── spec-candidates/  # local, gitignored
+├── spec-archive/     # local, gitignored
+├── spec-patches/     # local, gitignored
 ├── workspace/
 ├── INDEX.md
 ├── project-actions.md
@@ -120,13 +135,21 @@ CLAUDE.md
 其中：
 
 - `spec/`：项目长期有效事实和规范。
-- `spec/api/`：长期 API 约定和外部权威 API 文档入口，不维护完整接口列表。
+- `spec/docs-registry.md`：成熟项目接入时保留下来的高价值外部文档入口。
+- `spec/interview-bank.md`：init 和后续 contract 阶段确认过的项目关键问卷答案。
+- `spec/development-baseline.md`：开发过程约束，例如必须运行的检查。
+- `spec/coding-baseline.md`：代码编写约束。
+- `spec/api.md`：长期 API 约定和外部权威 API 文档入口，不维护完整接口列表。
+- `spec/references/shared/`：跨模块共享规范。
+- `spec/references/modules/`：具体模块、页面、功能或公共组件规范。
 - `contracts/`：某次需求的设计与验收定义。
 - `plans/`：围绕 contract 的开发计划、测试策略和 task 拆分。
 - `tasks/`：围绕 plan 的执行单元。
 - `tests/`：某次 contract 的正式验证结果。
 - `explain/`：面向 PM 的开发简报。
-- `spec-candidates/`：审批通过后的知识沉淀候选。
+- `spec-candidates/`：本地临时知识沉淀候选，默认不提交 git；agent 读取正式 spec 时可按需读取，但不能覆盖正式 spec。
+- `spec-archive/`：本地 candidate 处理归档，默认不提交 git。
+- `spec-patches/`：本地人工合入补丁，默认不提交 git；确认后应把真正规则合入正式 spec。
 - `workspace/`：临时过程材料，默认不提交正式内容。
 - `INDEX.md`：跨需求轻量索引，Ritual 阶段优先读取它，不扫全部产物。
 - `.claude/` 与 `CLAUDE.md`：入口保护和手动兜底。
@@ -151,6 +174,8 @@ Ruyi 初始化后会部署三层入口保护：
 - `.claude/commands/ruyi.md`：提供 `/ruyi` 手动兜底命令。
 
 如果发现 agent 没有走 Ruyi 流程，可以输入 `/ruyi` 强制激活。
+
+成熟项目接入时，Ruyi 不倒灌历史 contract。`ruyi-init` 提供两种方式：快速开始只启用流程，历史知识后续按需补；完整迁移会蒸馏现有文档并澄清关键问题，生成项目知识基线。
 
 ## 安装
 
@@ -198,6 +223,7 @@ ruyi-implement   创建 task
 ruyi-test        创建 test
 ruyi-explain     创建 explain
 ruyi-approve     更新 explain 审批状态
+ruyi-spec-discover 从现有代码反推本地 spec-candidate
 ruyi-spec-evolve 创建 spec-candidate
 ruyi-spec-merge  周期性人工合入 spec-candidate
 ```
@@ -210,7 +236,7 @@ ruyi-spec-merge  周期性人工合入 spec-candidate
 
 Ruyi 不维护后端 API 文档本体，只维护三类信息：
 
-- `.ruyi/spec/api/`：长期 API 约定和权威源入口，例如 Swagger / Apifox / Yapi / OpenAPI 链接。
+- `.ruyi/spec/api.md`：长期 API 约定和权威源入口，例如 Swagger / Apifox / Yapi / OpenAPI 链接。
 - `contract` 的 `## 接口范围`：本次需求涉及哪些接口、新增/修改/复用/废弃。
 - `plan` 的 `## 接口对接`：前端如何接 service、类型、mock、错误处理和状态管理。
 

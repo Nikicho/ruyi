@@ -46,7 +46,9 @@ def project_readme() -> str:
 - `tasks/`：由 plan 拆分出的开发任务。
 - `tests/`：每次 contract 对应的正式验证结果。
 - `explain/`：面向 PM 的开发简报。
-- `spec-candidates/`：审批通过后的知识沉淀候选，不自动改写正式 spec。
+- `spec-candidates/`：本地临时知识沉淀候选，默认不提交 git，不自动改写正式 spec。
+- `spec-archive/`：本地 candidate 处理归档，默认不提交 git。
+- `spec-patches/`：本地人工合入补丁，默认不提交 git。
 - `workspace/`：临时过程材料，不提交正式内容。
 """
 
@@ -105,6 +107,25 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
     questions = facts.get("open_questions") or []
 
     contents = {
+        "INDEX.md": frontmatter("open", "init spec 索引", needs_review=True) + """# Spec Index
+
+本目录只放长期有效的项目事实和项目规则。
+
+## 核心文件
+
+- `project-overview.md`：项目目标、技术栈和业务概况。
+- `project-structure.md`：项目目录、模块边界和代码组织。
+- `development-baseline.md`：开发过程约束，例如必须运行的检查。
+- `coding-baseline.md`：代码编写约束，例如组件、状态、样式、错误处理规则。
+- `testing-baseline.md`：测试策略和验收证据要求。
+- `api.md`：API 权威源和长期对接原则。
+- `open-questions.md`：不能作为事实引用的知识缺口。
+
+## 详细规范
+
+- `references/shared/`：跨模块共享规范。
+- `references/modules/`：具体模块或功能的规范。
+""",
         "project-overview.md": frontmatter("observed", "init 项目事实读取") + f"""# 项目概览
 
 ## 技术栈
@@ -123,13 +144,23 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 {format_list(modules) if modules else "待确认。"}
 """,
-        "frontend-baseline.md": frontmatter("open", "init 占位", needs_review=True) + """# 前端基线
+        "development-baseline.md": frontmatter("open", "init 占位", needs_review=True) + """# 开发过程基线
 
-## 框架约定
+## 必跑检查
 
 待补充。
 
-## 数据访问方式
+## 变更前后自检
+
+待补充。
+""",
+        "coding-baseline.md": frontmatter("open", "init 占位", needs_review=True) + """# 代码编写基线
+
+## 组件与状态
+
+待补充。
+
+## 样式与交互
 
 待补充。
 """,
@@ -143,19 +174,44 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 {format_list(questions) if questions else "暂无。"}
 """,
-        "api/README.md": frontmatter("open", "init API 占位", needs_review=True) + """# API 相关 Spec
+        "api.md": frontmatter("open", "init API 占位", needs_review=True) + """# API 相关 Spec
 
-本目录维护项目层长期 API 约定。**不维护完整接口列表**，权威源是后端。
+本文件维护项目层长期 API 约定和权威源入口。**不维护完整接口列表**，权威源是后端。
 
 建议添加：
 
-- `api-source.md`：外部权威 API 文档入口。
-- `response-envelope.md`：统一响应结构。
-- `error-codes.md`：错误码约定。
-- `auth-flow.md`：鉴权流程。
-- `conventions.md`：命名 / 分页 / 排序通用约定。
+- `references/shared/api/source.md`：外部权威 API 文档入口。
+- `references/shared/api/response-envelope.md`：统一响应结构。
+- `references/shared/api/error-codes.md`：错误码约定。
+- `references/shared/api/auth-flow.md`：鉴权流程。
+- `references/shared/api/conventions.md`：命名 / 分页 / 排序通用约定。
 
 Ruyi 只引用 API 权威源，不拷贝完整 Swagger / OpenAPI / Apifox 字段表。
+""",
+        "references/shared/INDEX.md": frontmatter("open", "init shared references 索引", needs_review=True) + """# Shared Spec References
+
+跨模块共享规范放在这里。
+
+建议按领域建文件夹，例如：
+
+- `api/`
+- `components/`
+- `routing/`
+- `errors/`
+""",
+        "references/modules/INDEX.md": frontmatter("open", "init module references 索引", needs_review=True) + """# Module Spec References
+
+具体模块、页面或功能规范放在这里。
+
+同一功能或公共组件只建一个文件夹，在文件夹内按主题拆分文件，例如：
+
+```text
+table/
+  simple-usage.md
+  usage.md
+  columns.md
+  internals.md
+```
 """,
     }
     if is_full_migration(facts):
@@ -310,13 +366,28 @@ def distilled_specs(facts: dict[str, Any]) -> dict[str, str]:
 
 
 def safe_distilled_target(value: Any) -> str:
-    raw = str(value or "brownfield-distilled.md").replace("\\", "/").lstrip("/")
+    default = "references/shared/brownfield-distilled.md"
+    raw = str(value or default).replace("\\", "/").lstrip("/")
     target = PurePosixPath(raw)
     if not target.parts or any(part in ("", ".", "..") for part in target.parts):
-        return "brownfield-distilled.md"
+        return default
     if target.suffix != ".md":
-        return "brownfield-distilled.md"
-    return target.as_posix()
+        return default
+    top_level_allowed = {
+        "project-overview.md",
+        "project-structure.md",
+        "development-baseline.md",
+        "coding-baseline.md",
+        "testing-baseline.md",
+        "api.md",
+        "open-questions.md",
+    }
+    text = target.as_posix()
+    if text in top_level_allowed:
+        return text
+    if text.startswith("references/shared/") or text.startswith("references/modules/"):
+        return text
+    return default
 
 
 def unknown_answer_count(facts: dict[str, Any]) -> int:
@@ -336,17 +407,17 @@ def fallback_required(facts: dict[str, Any]) -> bool:
 
 def fallback_specs() -> dict[str, str]:
     return {
-        "auth-flow.md": frontmatter("open", "init fallback", needs_review=True) + """# 鉴权流程
+        "references/shared/auth/flow.md": frontmatter("open", "init fallback", needs_review=True) + """# 鉴权流程
 
 待确认。init 阶段未能确认当前项目鉴权方式。
 agent 在涉及鉴权的 contract / implement 阶段必须先询问。
 """,
-        "error-handling.md": frontmatter("open", "init fallback", needs_review=True) + """# 错误处理
+        "references/shared/errors/handling.md": frontmatter("open", "init fallback", needs_review=True) + """# 错误处理
 
 待确认。init 阶段未能确认当前项目错误处理约定。
 agent 在涉及接口、异常提示或状态处理时必须先询问。
 """,
-        "routing-conventions.md": frontmatter("open", "init fallback", needs_review=True) + """# 路由约定
+        "references/shared/routing/conventions.md": frontmatter("open", "init fallback", needs_review=True) + """# 路由约定
 
 待确认。init 阶段未能确认当前项目路由组织方式。
 agent 在新增页面、权限或导航逻辑前必须先询问。

@@ -21,9 +21,10 @@
 
 - 未初始化项目，必须先进入初始化阶段。
 - 未完成初始化前，除 `ruyi-init` 外，不进入其他子 skill 的正式执行。
-- 有明确功能需求、修复目标或重构目标时，先进入需求定义阶段。
+- 有明确功能需求、修复目标或业务重构目标时，先进入需求定义阶段。
+- 代码优化、代码微重构等无行为变化维护请求，可由 `using-ruyi` 路由到 `ruyi-implement` 轻量维护模式；该模式不要求 contract / plan / task。
 - 没有 `contract` 或等价需求定义时，不进入开发计划阶段。
-- 没有 `plan` 或等价实施计划时，不进入正式编码实现阶段。
+- 没有 `plan` 或等价实施计划时，不进入正式需求实现阶段；轻量维护模式除外。
 - 没有需求定义锚点时，不进入开发简报阶段。
 - 没有 `test` 验证结果时，不进入开发简报阶段。
 - 审批发生在开发简报之后，不允许绕过开发简报直接进入审批。
@@ -51,7 +52,7 @@ tiny 不是绕过 Ruyi。tiny 只是省略 plan/task/explain/approve/spec-candid
 - 测试验证：`test`
 - 开发简报：`explain`
 - 审批：更新 explain 中的 `approval`
-- 知识沉淀：生成 `spec-candidate`
+- 知识沉淀：生成本地 `spec-candidate`
 
 ## 6. 人工确认点
 
@@ -73,7 +74,9 @@ tiny 不是绕过 Ruyi。tiny 只是省略 plan/task/explain/approve/spec-candid
 
 以下动作不属于单次需求主流程，但允许周期性执行：
 
+- `ruyi-spec-discover`：从现有代码反推本地 spec-candidate，不直接写正式 spec。
 - `ruyi-spec-merge`：人工确认并合入 spec-candidate 到正式 spec。
+- 轻量维护模式：用于代码优化、代码微重构等无行为变化维护，不生成 contract / plan / task / explain / spec-candidate。
 
 ## 9. 中途变更处理
 

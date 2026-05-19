@@ -2,29 +2,40 @@
 
 ## 1. 对象定位
 
-`spec-candidate` 是知识沉淀候选，用于记录“这次交付中可能值得沉淀为长期规范的内容”。
+`spec-candidate` 是本地临时知识候选，用于记录“可能值得沉淀为长期规范”的内容。
 
-它不是正式 spec，不会自动改变项目长期规则。
+它不是正式 spec，不会自动改变项目长期规则，也不应该提交到 git 误导团队成员。
 
 ## 2. 路径规则
 
 路径格式：
 
 ```text
-spec-candidates/<module>/<feature>/<contract-date>.md
+.ruyi/spec-candidates/<target-layer>/<target-spec-path>
 ```
+
+示例：
+
+```text
+.ruyi/spec-candidates/project/coding-baseline.md
+.ruyi/spec-candidates/project/references/shared/table/columns.md
+.ruyi/spec-candidates/project/references/modules/orders/search.md
+```
+
+候选路径跟随目标 spec 路径，不使用日期做版本目录。日期只作为来源 explain 的锚点。
 
 ## 3. 头部元信息
 
 建议包含：
 
-- 来源 explain
-- 所属模块
-- 功能对象
-- 日期
-- 目标层级
-- 目标 spec 文件
-- 状态
+- `source_explain`
+- `module`
+- `feature`
+- `date`
+- `target_layer`
+- `target_spec`
+- `local_only: true`
+- `status`
 
 状态允许：
 
@@ -38,7 +49,7 @@ spec-candidates/<module>/<feature>/<contract-date>.md
 ## 4. 正文结构
 
 ```md
-# Spec Candidate：[名称]
+# Spec Candidate：<名称>
 
 ## 沉淀建议
 ## 依据
@@ -49,12 +60,12 @@ spec-candidates/<module>/<feature>/<contract-date>.md
 
 ## 5. 规则
 
-- 必须锚定已审批通过的 explain。
+- 必须锚定已审批通过的 explain，除非由 `ruyi-spec-discover` 从代码反推生成并明确标记来源。
 - 来源 explain 必须锚定 contract、plan 和 test。
 - 候选必须包含目标层级、目标 spec、建议内容、证据和适用范围。
 - 不允许把 contract、test、explain 原文搬运进候选。
 - 候选必须说明适用范围。
 - 候选必须说明哪些内容不应沉淀。
-- 同一模块、同一功能、同一目标 spec 的新 pending candidate 会自动取代旧 pending candidate。
 - team 层内容只形成候选，不自动写入 `.ruyi-team`。
 - 候选合入正式 spec 只能通过 `ruyi-spec-merge` 生成 patch 后由用户或维护者人工执行。
+- candidate 可以被 agent 默认读取，但只能作为待确认信号，不能覆盖正式 spec。

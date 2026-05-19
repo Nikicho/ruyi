@@ -13,7 +13,20 @@ from pathlib import Path
 from typing import Any
 
 
-INTENTS = ("init", "contract", "plan", "implement", "test", "explain", "approve", "spec-evolve", "continue", "amend")
+INTENTS = (
+    "init",
+    "contract",
+    "maintain",
+    "plan",
+    "implement",
+    "test",
+    "explain",
+    "approve",
+    "spec-discover",
+    "spec-evolve",
+    "continue",
+    "amend",
+)
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 CONTRACT_READY_STATUSES = ("confirmed",)
@@ -31,6 +44,7 @@ STAGE_SKILLS = {
     "test": "ruyi-test",
     "explain": "ruyi-explain",
     "approve": "ruyi-approve",
+    "spec-discover": "ruyi-spec-discover",
     "spec-evolve": "ruyi-spec-evolve",
     "complete": None,
 }
@@ -92,6 +106,23 @@ def explain_path(project: Path, payload: dict[str, Any]) -> Path:
 
 def candidate_path(project: Path, payload: dict[str, Any]) -> Path:
     return project / ".ruyi" / "spec-candidates" / payload["module"] / payload["feature"] / f"{payload['date']}.md"
+
+
+def has_spec_candidate_for_explain(project: Path, payload: dict[str, Any]) -> bool:
+    root = project / ".ruyi" / "spec-candidates"
+    if not root.is_dir():
+        return False
+    expected = f".ruyi/explain/{payload['module']}/{payload['feature']}/{payload['date']}.md"
+    legacy = candidate_path(project, payload)
+    if legacy.is_file():
+        return True
+    for candidate in root.rglob("*.md"):
+        if candidate.name == "EXPECTED.md":
+            continue
+        frontmatter = parse_frontmatter(candidate)
+        if frontmatter.get("source_explain") == expected and frontmatter.get("status", "pending") in ("pending", "candidate"):
+            return True
+    return False
 
 
 def has_task(project: Path, payload: dict[str, Any]) -> bool:
@@ -291,6 +322,12 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
     if intent == "amend":
         return route("contract", ["amendment-classification-required"], "检测到中途变更意图，必须先按 A/B/C/D 分类并向用户确认。")
 
+    if intent == "maintain":
+        return route("implement", [], "进入 ruyi-implement 轻量维护模式。", mode="maintenance")
+
+    if intent == "spec-discover":
+        return route("spec-discover", [], "进入 ruyi-spec-discover，从现有代码反推本地 spec candidates。")
+
     if intent in ("init", "contract"):
         return route(intent, [], f"进入 {STAGE_SKILLS[intent]}。")
 
@@ -426,7 +463,7 @@ def route_continue(project: Path, payload: dict[str, Any]) -> dict[str, Any]:
     if approval != "approved":
         return route("approve", ["approval-pending"], "下一步是审批 explain。")
 
-    if not candidate_path(project, payload).is_file():
+    if not has_spec_candidate_for_explain(project, payload):
         return route("spec-evolve", ["spec-candidate-not-found"], "下一步是生成 spec candidate。")
 
     return route("complete", [], "该 contract 的 Ruyi 主流程已完成。")

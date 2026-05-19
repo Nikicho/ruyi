@@ -23,7 +23,8 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 - 不读取 team 层规范来决定初始化内容。
 - 不覆盖已有文件。
 - 初始化必须部署入口保护：INDEX 占位、CLAUDE.md 持久提示、Claude Code hook、`/ruyi` 手动兜底命令。
-- 初始化必须创建 `.ruyi/spec/api/README.md`，但不读取项目代码推断 API 列表。
+- 初始化必须创建 `.ruyi/spec/api.md`，但不读取项目代码推断 API 列表。
+- 初始化必须创建 `.ruyi/spec/references/shared/INDEX.md` 和 `.ruyi/spec/references/modules/INDEX.md`。
 - 初始化必须为 spec 内容写入 confidence，区分 `observed / distilled / claimed / open / confirmed_by_user`。
 - 快速开始不生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
 - 完整迁移必须生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
@@ -62,8 +63,9 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 外部文档读取规则：
 
 - 如果用户本地有 `agent-browser`、`fast-browser`、`bb-browser` 等浏览器工具，优先推荐通过浏览器工具查看外部文档后再蒸馏。
-- 如果没有可用浏览器工具，要求用户提供本地导出文件，例如 Markdown、HTML、PDF、docx；只蒸馏，不保存外部文档地址。
+- 如果没有可用浏览器工具，要求用户先把外部文档统一转换成 agent 易读的文本文件，例如 Markdown 或纯文本；只蒸馏，不保存外部文档地址。
 - 本地导出文件只作为蒸馏输入，不写入 `docs-registry.md`，也不把本地路径写进可提交 spec。
+- PDF、docx、HTML 不直接读取；用户应先转换成文本类文件再交给 agent。
 - 不采用复制粘贴长文方式。
 
 文档三档分流：
@@ -93,7 +95,7 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 | 不完整初始化时自动补齐 | 停止并报告缺失项，让用户决定后续处理 |
 | 初始化时读取 team 规范 | team 层只在协作开发过程中参与规则注入 |
 | 猜测业务模块规则 | 只记录可观察项目事实和待确认问题 |
-| 初始化时把 Swagger / API 列表复制进 spec | 只创建 `spec/api/README.md`，由用户后续补权威源链接 |
+| 初始化时把 Swagger / API 列表复制进 spec | 只创建 `spec/api.md`，由用户后续补权威源链接 |
 | 用 hook 执行业务路由 | hook 只检测 `.ruyi/` 或 `.ruyirc` 并输出 reminder |
 | 把历史功能倒灌成 contract | 历史留在代码、git、外部文档；Ruyi 从下一次变更开始生成 contract |
 | 把所有外部文档都录入 docs-registry | 只录入已确认有用入口，陈旧文档写入评估笔记 |

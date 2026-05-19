@@ -1,6 +1,6 @@
 ---
 name: ruyi-init
-description: Use when an existing frontend project needs to be initialized for Ruyi, including mature brownfield projects. Common triggers: "接入Ruyi", "初始化Ruyi", "启用Ruyi", "init Ruyi", "setup Ruyi". Creates .ruyi, .ruyirc, confidence-marked project spec anchors, docs-registry, interview-bank, API placeholder, INDEX, CLAUDE.md reminder, Claude Code hook, and /ruyi fallback command.
+description: Use when an existing frontend project needs to be initialized for Ruyi, including mature brownfield projects. Common triggers: "接入Ruyi", "初始化Ruyi", "启用Ruyi", "init Ruyi", "setup Ruyi". Creates .ruyi, .ruyirc, confidence-marked project spec anchors, split baselines, references indexes, docs-registry/interview-bank for full migration, INDEX, CLAUDE.md reminder, Claude Code hook, and /ruyi fallback command.
 ---
 
 # Ruyi Init
@@ -41,9 +41,9 @@ description: Use when an existing frontend project needs to be initialized for R
    - 完整迁移：蒸馏现有文档并澄清关键问题，建立项目知识基线。
 4. 读取项目事实；完整迁移时同时读取候选文档源和 brownfield 必问问卷。
 5. 生成 `.ruyirc`。
-6. 生成 `.ruyi/spec/` 基础锚点和 `.ruyi/spec/api/README.md`。
+6. 生成 `.ruyi/spec/` 基础锚点、拆分后的 baseline、`api.md` 和 `references/shared|modules` 索引。
 7. 完整迁移时生成 `docs-registry.md`、`interview-bank.md`、`workspace/init-evaluation-notes.md`。
-8. 创建 `contracts / plans / tasks / tests / explain / spec-candidates / workspace` 目录。
+8. 创建 `contracts / plans / tasks / tests / explain / spec-candidates / spec-archive / spec-patches / workspace` 目录。
 9. 生成 `.ruyi/project-actions.md`。
 10. 生成 `.ruyi/INDEX.md` 新格式占位。
 11. 写入或合并 `.claude/settings.json` 的入口保护 hook。
@@ -73,8 +73,9 @@ description: Use when an existing frontend project needs to be initialized for R
 遇到 Confluence、Notion、Apifox、语雀、飞书、内网知识库等外部文档时，先判断本地是否有可用浏览器工具，例如 `agent-browser`、`fast-browser`、`bb-browser`。
 
 - 有浏览器工具：推荐用户授权通过这些工具查看文档，再做蒸馏。
-- 没有浏览器工具：要求用户提供本地导出文件，例如 Markdown、HTML、PDF、docx；只蒸馏，不保存外部文档地址。
+- 没有浏览器工具：要求用户先把外部文档统一转换成 agent 易读的文本文件，例如 Markdown 或纯文本；只蒸馏，不保存外部文档地址。
 - 本地导出文件只作为蒸馏输入，不写入 `docs-registry.md`，也不把本地路径写进可提交 spec。
+- PDF、docx、HTML 不直接读取；用户应先转换成文本类文件再交给 agent。
 - 不采用复制粘贴长文方式。
 
 ### 5.3 蒸馏确认
@@ -164,16 +165,22 @@ description: Use when an existing frontend project needs to be initialized for R
 - `.ruyi/README.md`
 - `.ruyi/spec/project-overview.md`
 - `.ruyi/spec/project-structure.md`
-- `.ruyi/spec/frontend-baseline.md`
+- `.ruyi/spec/INDEX.md`
 - `.ruyi/spec/testing-baseline.md`
+- `.ruyi/spec/development-baseline.md`
+- `.ruyi/spec/coding-baseline.md`
 - `.ruyi/spec/open-questions.md`
-- `.ruyi/spec/api/README.md`
+- `.ruyi/spec/api.md`
+- `.ruyi/spec/references/shared/INDEX.md`
+- `.ruyi/spec/references/modules/INDEX.md`
 - `.ruyi/contracts/`
 - `.ruyi/plans/`
 - `.ruyi/tasks/`
 - `.ruyi/tests/`
 - `.ruyi/explain/`
 - `.ruyi/spec-candidates/`
+- `.ruyi/spec-archive/`
+- `.ruyi/spec-patches/`
 - `.ruyi/workspace/README.md`
 - `.ruyi/project-actions.md`
 - `.claude/commands/ruyi.md`
@@ -188,6 +195,9 @@ description: Use when an existing frontend project needs to be initialized for R
 
 - `.gitignore` 中的 `.ruyi/workspace/**`
 - `.gitignore` 中的 `!.ruyi/workspace/README.md`
+- `.gitignore` 中的 `.ruyi/spec-candidates/**`
+- `.gitignore` 中的 `.ruyi/spec-archive/**`
+- `.gitignore` 中的 `.ruyi/spec-patches/**`
 - `.claude/settings.json` 中的 `hooks.UserPromptSubmit`
 - `CLAUDE.md` 中的 `## Ruyi 主流程激活` 段
 

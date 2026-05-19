@@ -12,25 +12,42 @@ from typing import Any
 
 TARGET_LAYERS = ("project", "team")
 PENDING_STATUSES = ("pending", "candidate", "")
-TARGET_SPECS = (
-    "project-overview.md",
-    "project-structure.md",
-    "frontend-baseline.md",
-    "testing-baseline.md",
-    "open-questions.md",
-    "api/api-source.md",
-    "api/response-envelope.md",
-    "api/error-codes.md",
-    "api/auth-flow.md",
-    "api/conventions.md",
-)
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
+TOP_LEVEL_TARGET_SPECS = {
+    "project-overview.md",
+    "project-structure.md",
+    "development-baseline.md",
+    "coding-baseline.md",
+    "testing-baseline.md",
+    "api.md",
+    "open-questions.md",
+}
 
 
 def validate_slug(name: str, value: str) -> None:
     if not SLUG_PATTERN.match(value):
         raise ValueError(f"{name} must use lowercase letters, numbers, and hyphens: {value}")
+
+
+def normalize_target_spec(value: str) -> str:
+    target = str(value).replace("\\", "/").strip().lstrip("/")
+    if not target or target.endswith("/") or "//" in target:
+        raise ValueError("target_spec must be a markdown file path")
+    path = Path(target)
+    if path.suffix != ".md":
+        raise ValueError("target_spec must be a markdown file")
+    if any(part in ("", ".", "..") for part in path.parts):
+        raise ValueError("target_spec must not contain traversal segments")
+    normalized = path.as_posix()
+    if normalized in TOP_LEVEL_TARGET_SPECS:
+        return normalized
+    if normalized.startswith("references/shared/") or normalized.startswith("references/modules/"):
+        return normalized
+    raise ValueError(
+        "target_spec must be a top-level spec file or live under references/shared/ or references/modules/"
+    )
 
 
 def as_list(value: Any) -> list[str]:
@@ -55,8 +72,7 @@ def validate_payload(payload: dict[str, Any]) -> None:
         raise ValueError("date must use YYYY-MM-DD")
     if payload["target_layer"] not in TARGET_LAYERS:
         raise ValueError(f"target_layer must be one of: {', '.join(TARGET_LAYERS)}")
-    if payload["target_spec"] not in TARGET_SPECS:
-        raise ValueError(f"target_spec must be one of: {', '.join(TARGET_SPECS)}")
+    payload["target_spec"] = normalize_target_spec(payload["target_spec"])
     if not as_list(payload["proposals"]):
         raise ValueError("proposals must include at least one item")
     if not as_list(payload["evidence"]):
@@ -85,9 +101,8 @@ def candidate_path(project: Path, payload: dict[str, Any]) -> Path:
         project
         / ".ruyi"
         / "spec-candidates"
-        / payload["module"]
-        / payload["feature"]
-        / f"{payload['date']}.md"
+        / payload["target_layer"]
+        / payload["target_spec"]
     )
 
 
@@ -157,6 +172,7 @@ feature: {payload["feature"]}
 date: {payload["date"]}
 target_layer: {payload["target_layer"]}
 target_spec: {payload["target_spec"]}
+local_only: true
 status: pending
 ---
 
@@ -185,7 +201,7 @@ status: pending
 
 
 def supersede_existing_candidates(project: Path, payload: dict[str, Any], new_target: Path) -> list[str]:
-    root = project / ".ruyi" / "spec-candidates" / payload["module"] / payload["feature"]
+    root = new_target.parent
     if not root.is_dir():
         return []
 
@@ -291,7 +307,7 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--date", required=True, help="Contract date, YYYY-MM-DD")
     parser.add_argument("--title", required=True, help="Candidate display title")
     parser.add_argument("--target-layer", required=True, choices=TARGET_LAYERS, help="Target layer")
-    parser.add_argument("--target-spec", required=True, choices=TARGET_SPECS, help="Target spec file")
+    parser.add_argument("--target-spec", required=True, help="Target spec file")
     parser.add_argument("--proposal", action="append", required=True, help="Reusable rule or fact candidate")
     parser.add_argument("--evidence", action="append", required=True, help="Evidence supporting the candidate")
     parser.add_argument("--scope", action="append", required=True, help="Applicable scope")

@@ -1,6 +1,6 @@
 ---
 name: using-ruyi
-description: Frontend project Ruyi pipeline router. Use whenever the user asks to add a feature, fix a bug, refactor, implement, test, generate a dev brief, approve a delivery, distill knowledge, amend an ongoing requirement, or continue ongoing work in a frontend project. Common Chinese triggers: "继续"、"新增"、"修复"、"重构"、"接入Ruyi"、"开发简报"、"通过"、"沉淀"、"再加"、"改一下". Common English triggers: "continue", "add feature", "fix", "implement", "test", "approve", "distill", "also add", "change". MUST load before any code edit in projects containing .ruyi/ or .ruyirc.
+description: Frontend project Ruyi pipeline router. Use whenever the user asks to add a feature, fix a bug, refactor, optimize code, implement, test, generate a dev brief, approve a delivery, distill knowledge, infer specs from code, amend an ongoing requirement, or continue ongoing work in a frontend project. Common Chinese triggers: "继续"、"新增"、"修复"、"重构"、"代码优化"、"代码微重构"、"代码反推spec"、"梳理组件规范"、"接入Ruyi"、"开发简报"、"通过"、"沉淀"、"再加"、"改一下". Common English triggers: "continue", "add feature", "fix", "refactor", "optimize", "infer spec", "implement", "test", "approve", "distill", "also add", "change". MUST load before any code edit in projects containing .ruyi/ or .ruyirc.
 ---
 
 # Using Ruyi
@@ -63,12 +63,14 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 | 用户意图 | 子 skill |
 | --- | --- |
 | 初始化已有前端项目 | `../ruyi-init/SKILL.md` |
-| 定义新功能、修复、重构目标 | `../ruyi-contract/SKILL.md` |
+| 定义新功能、修复、业务重构目标 | `../ruyi-contract/SKILL.md` |
+| 代码优化、代码微重构、无行为变化维护 | `../ruyi-implement/SKILL.md`（轻量维护模式） |
 | 根据已确认需求制定开发计划 | `../ruyi-plan/SKILL.md` |
 | 根据已确认计划编码实现 | `../ruyi-implement/SKILL.md` |
 | 验证实现结果 | `../ruyi-test/SKILL.md` |
 | 生成开发简报 | `../ruyi-explain/SKILL.md` |
 | 记录审批结论 | `../ruyi-approve/SKILL.md` |
+| 从现有代码反推本地规范候选 | `../ruyi-spec-discover/SKILL.md` |
 | 提炼项目或团队规范候选 | `../ruyi-spec-evolve/SKILL.md` |
 | 周期性合入规范候选 | `../ruyi-spec-merge/SKILL.md` |
 
@@ -79,12 +81,14 @@ agent 负责把用户自然语言映射为下列 intent：
 | intent | 触发场景 |
 | --- | --- |
 | `init` | 初始化、接入 Ruyi、创建 `.ruyi` |
-| `contract` | 新功能、修复、重构、需求澄清、验收标准、自然语言测试用例 |
+| `contract` | 新功能、修复、业务重构、需求澄清、验收标准、自然语言测试用例 |
+| `maintain` | 代码优化、代码微重构、抽函数、拆组件、去重复、类型收紧、lint 整理，且不改变业务行为 |
 | `plan` | 已有 contract，要制定测试策略、开发计划或拆 task |
 | `implement` | 已有 plan，要开始编码、执行 task 或做代码自检 |
 | `test` | 验证、测试、构建、浏览器检查 |
 | `explain` | 生成开发简报、交付说明 |
 | `approve` | 审批、通过、驳回、要求修改 |
+| `spec-discover` | 从现有代码反推 spec、梳理组件规范、整理模块约定、生成本地候选 |
 | `spec-evolve` | 沉淀规范、形成候选、提炼经验 |
 | `continue` | 用户说“继续”、下一步、往后走 |
 | `amend` | 中途变更：再加、再改、改成、不要、换种方式、忘了说、also add、also change |
@@ -115,6 +119,7 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 | 条件 | 下一阶段 | 标准处理 |
 | --- | --- | --- |
 | 项目缺少 `.ruyi/` 或 `.ruyirc` | `ruyi-init` | 只允许初始化或退出 Ruyi 上下文 |
+| 代码优化 / 代码微重构，且不改变用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准 | `ruyi-implement` | 进入轻量维护模式，不要求 contract / plan / task |
 | 缺少 contract | `ruyi-contract` | 拒绝 plan/implement/test/explain/approve/spec-evolve |
 | contract `status` 不是 `confirmed` | `ruyi-contract` | 要求先确认需求 |
 | contract `size: tiny` 且需继续 | `ruyi-implement` | tiny 跳过 plan/task，直接进入实现 |
@@ -149,6 +154,18 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 2. 已有相关 feature 时，只读该 feature 最新 contract，进入 `ruyi-contract` 修订模式。
 3. 没有相关 feature 时，直接进入 `ruyi-contract` 创建新的 fix contract。
 4. **禁止**读取无关 module 的 contract / plan / explain 正文。
+
+### maintain 意图
+
+触发短语：“代码优化”、“代码微重构”、“无行为变化重构”、“抽函数”、“拆组件”、“去重复”、“类型收紧”、“lint 整理”等。
+
+执行：
+
+1. 先确认本次不改变用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准。
+2. 若会改变上述任一项，回到 `ruyi-contract`。
+3. 若确认只是维护型代码变更，进入 `ruyi-implement` 轻量维护模式。
+4. 轻量维护模式不要求 contract / plan / task，但必须有维护目标、写入边界、自检和验证结果。
+5. 收口时只识别是否存在可沉淀规范；如有，提示用户后续单独进入 spec-evolve，不自动生成 spec-candidate。
 
 ### amend 意图
 

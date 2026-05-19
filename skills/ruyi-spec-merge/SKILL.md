@@ -19,6 +19,7 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 - `merged` 不直接写正式 spec，只生成 `.ruyi/spec-patches/` 下的人工合入 patch。
 - 不自动写入 team 层。
 - 该 skill 不属于单次需求主流程。
+- `.ruyi/spec-candidates/` 和 `.ruyi/spec-archive/` 是本地临时层，默认不提交 git。
 
 ## 3. 执行步骤
 
@@ -27,7 +28,7 @@ description: Use when Ruyi spec candidates need periodic human review, merge pre
 3. 使用 `merge_diff.py` 预览 candidate 对目标 spec 的影响。
 4. 用户确认后，使用 `merge_apply.py` 标记为 `merged`、`rejected` 或 `superseded`。
 5. `merged` 会生成 patch 并归档到 `.ruyi/spec-archive/merged/`；`rejected` 归档到 `.ruyi/spec-archive/rejected/`；`superseded` 归档到 `.ruyi/spec-archive/superseded/`。
-6. 用户或维护者后续手动打开 patch，把真正可长期复用的内容合入正式 spec。
+6. 用户或维护者后续手动打开 patch，把真正可长期复用的内容合入当前唯一正式 spec。
 
 ## 4. 脚本调用
 

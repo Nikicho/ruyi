@@ -230,7 +230,10 @@ def brownfield_facts(facts: dict[str, Any]) -> dict[str, Any]:
 
 
 def brownfield_mode(facts: dict[str, Any]) -> str:
-    mode = str(brownfield_facts(facts).get("mode") or "quick-start").strip().lower()
+    raw_mode = brownfield_facts(facts).get("mode")
+    if not raw_mode:
+        raise ValueError("brownfield.mode must be explicitly set to quick-start or full-migration before writing init files")
+    mode = str(raw_mode).strip().lower()
     return "full-migration" if mode in ("full", "full-migration", "migration", "complete") else "quick-start"
 
 
@@ -554,6 +557,7 @@ def merge_claude_settings(project: Path, skipped: list[str], updated: list[str],
 
 def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any]:
     project = Path(project_path)
+    brownfield_mode(facts)
     created: list[str] = []
     skipped: list[str] = []
     updated: list[str] = []

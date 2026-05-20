@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2 - 2026-05-20
+
+### Init 接入门禁修复
+
+- `using-ruyi` 在未初始化项目上不再只返回“进入 ruyi-init”，而是明确要求先选择接入方式。
+- 未选择“快速开始”或“完整迁移”前，禁止运行 `init_write.py`，也禁止写入 `.ruyi/`。
+- `init_write.py` 移除隐式 `quick-start` 默认值；缺少 `facts.brownfield.mode` 时直接报错并停止写入。
+- 补充测试覆盖：未初始化路由必须返回 `adoption-mode-required`，init 写入必须要求显式 `brownfield.mode`。
+
 ## 1.0.1 - 2026-05-19
 
 ### Init 与成熟项目接入

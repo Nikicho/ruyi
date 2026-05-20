@@ -28,6 +28,7 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 - 初始化必须为 spec 内容写入 confidence，区分 `observed / distilled / claimed / open / confirmed_by_user`。
 - 快速开始不生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
 - 完整迁移必须生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
+- 用户未明确选择快速开始或完整迁移前，不允许写入 `.ruyi/`，也不允许用默认值代替用户选择。
 - 不批量生成历史 contract、plan、test、explain。
 
 ## 3. 项目事实读取

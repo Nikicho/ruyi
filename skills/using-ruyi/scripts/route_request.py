@@ -312,7 +312,13 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
     initialized = is_initialized(project)
 
     if not initialized:
-        return route("init", ["project-not-initialized"], "项目未初始化，必须先进入 ruyi-init。")
+        return route(
+            "init",
+            ["project-not-initialized", "adoption-mode-required"],
+            "项目未初始化。进入 ruyi-init 前必须先让用户选择接入方式：快速开始或完整迁移；未选择前不得写入 .ruyi。",
+            requires_user_choice=True,
+            choices=["quick-start", "full-migration"],
+        )
 
     validate_stage_payload(payload)
 

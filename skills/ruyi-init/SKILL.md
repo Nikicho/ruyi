@@ -30,13 +30,14 @@ description: Use when an existing frontend project needs to be initialized for R
 - `spec` 采用空白占位加部分自动内容。
 - 不为追求完整而猜测。
 - 不读取 team 层基线来决定初始化内容；team 层只在协作开发过程中参与规则注入。
+- 未明确选择 `quick-start` 或 `full-migration` 前，禁止运行 `init_write.py`，禁止写入 `.ruyi/`。
 - 初始化过程遵守 `references/init-discipline.md`。
 
 ## 4. 主流程
 
 1. 判断支持范围。
 2. 判断初始化状态。
-3. 让用户选择接入方式：
+3. 让用户选择接入方式；未选择前必须停住：
    - 快速开始：只启用 Ruyi 流程，历史知识后续按需补。
    - 完整迁移：蒸馏现有文档并澄清关键问题，建立项目知识基线。
 4. 读取项目事实；完整迁移时同时读取候选文档源和 brownfield 必问问卷。
@@ -134,7 +135,7 @@ description: Use when an existing frontend project needs to be initialized for R
 3. 如果 `initialized=true` 且 `complete=true`，停止，不重复初始化。
 4. 如果 `initialized=true` 且 `complete=false`，停止，只报告缺失项，不自动补齐。
 5. 如果未初始化且支持，运行 `scripts/init_read.py --project <path>`。
-6. 按用户选择写入 `facts.brownfield.mode`：
+6. 按用户选择写入 `facts.brownfield.mode`；如果用户还没选，停止并询问，不得继续：
    - `quick-start`
    - `full-migration`
 7. 完整迁移时，先让用户确认文档分流和问卷答案，再写入 facts。

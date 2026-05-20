@@ -13,7 +13,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 2. 若存在：声明 `Ruyi 主流程已激活`，读取 `.ruyi/INDEX.md`。**禁止读取 contract / plan / explain 文件正文**。
    - INDEX 不存在时，仅扫描 `contracts/` 与 `explain/` 的目录名，不读文件正文。
    - 列出最多 5 条活动需求候选时，只使用 INDEX 的元信息和一句话业务目标。
-3. 若不存在：判断用户意图是否为初始化；不是初始化则退出 Ruyi 上下文。
+3. 若不存在：判断用户意图是否为初始化；不是初始化则退出 Ruyi 上下文。若是初始化，必须先让用户选择“快速开始”或“完整迁移”，未选择前不得运行 `init_write.py` 或写入 `.ruyi/`。
 4. 在完成上述判断前，不得执行任何代码编辑、文件写入或项目内 shell 命令。
 5. 上下文预算：路由确定前，最多读取 `.ruyi/INDEX.md` 与 1 个目标 module 的目录列表。
    - 不允许读取多个 feature 的 contract / plan / explain 正文。
@@ -43,7 +43,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 1. 检查当前项目根目录是否存在 `.ruyi/` 或 `.ruyirc`。
 2. 若存在，优先使用 Ruyi 主流程。
 3. 判断当前项目是否已初始化。
-4. 未初始化时，只能进入 `ruyi-init`。
+4. 未初始化时，只能进入 `ruyi-init`，并且必须先完成接入方式选择。
 5. 已初始化时，先判断用户意图。
 6. 如果用户只说“继续”，先定位当前活动需求；无法唯一定位时请用户确认。
 7. 如果能识别 `module / feature / date`，优先按本文件“路由判定表”推断下一阶段；可选使用 `scripts/route_request.py` 复核。
@@ -118,7 +118,7 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 
 | 条件 | 下一阶段 | 标准处理 |
 | --- | --- | --- |
-| 项目缺少 `.ruyi/` 或 `.ruyirc` | `ruyi-init` | 只允许初始化或退出 Ruyi 上下文 |
+| 项目缺少 `.ruyi/` 或 `.ruyirc` | `ruyi-init` | 先询问接入方式：快速开始 / 完整迁移；未选择前不得写入 `.ruyi/` |
 | 代码优化 / 代码微重构，且不改变用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准 | `ruyi-implement` | 进入轻量维护模式，不要求 contract / plan / task |
 | 缺少 contract | `ruyi-contract` | 拒绝 plan/implement/test/explain/approve/spec-evolve |
 | contract `status` 不是 `confirmed` | `ruyi-contract` | 要求先确认需求 |

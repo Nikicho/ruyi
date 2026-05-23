@@ -21,10 +21,6 @@ def parse_frontmatter_text(text: str) -> tuple[dict[str, str], str]:
     return data, text[end + len("\n---\n") :]
 
 
-def render_frontmatter(data: dict[str, str]) -> str:
-    return "---\n" + "\n".join(f"{key}: {value}" for key, value in data.items()) + "\n---\n"
-
-
 def section_bullets(text: str, heading: str) -> list[str]:
     marker = f"## {heading}"
     start = text.find(marker)
@@ -40,8 +36,3 @@ def candidate_files(project: Path) -> list[Path]:
     if not root.is_dir():
         return []
     return sorted(path for path in root.rglob("*.md") if path.name != "EXPECTED.md")
-
-
-def archive_path(project: Path, candidate: Path, decision: str) -> Path:
-    rel = candidate.relative_to(project / ".ruyi" / "spec-candidates")
-    return project / ".ruyi" / "spec-archive" / decision / rel

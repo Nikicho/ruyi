@@ -21,6 +21,8 @@ Ruyi 仓库/
     ├── ruyi-test/
     ├── ruyi-explain/
     ├── ruyi-approve/
+    ├── ruyi-upgrade/
+    ├── ruyi-spec-discover/
     ├── ruyi-spec-evolve/
     └── ruyi-spec-merge/
 
@@ -33,6 +35,8 @@ Agent skills 目录/
 ├── ruyi-test/
 ├── ruyi-explain/
 ├── ruyi-approve/
+├── ruyi-upgrade/
+├── ruyi-spec-discover/
 ├── ruyi-spec-evolve/
 └── ruyi-spec-merge/
 ```
@@ -125,6 +129,8 @@ ruyi-implement
 ruyi-test
 ruyi-explain
 ruyi-approve
+ruyi-upgrade
+ruyi-spec-discover
 ruyi-spec-evolve
 ruyi-spec-merge
 ```
@@ -143,6 +149,14 @@ git pull
 ```
 
 复制安装的场景需要重新复制 `skills/` 下的各个目录。
+
+更新 skills 后，已经初始化过的业务项目应先通过统一入口运行升级：
+
+```text
+请使用 using-ruyi 继续当前项目工作；如果项目 schema 落后，先运行 ruyi-upgrade。
+```
+
+`ruyi-upgrade` 会自动迁移 `.ruyirc`、本地忽略规则和 INDEX 等机械结构。检测到旧 `workspace / spec-archive / spec-patches` 目录时，会先询问是否删除；不会自动重解释 contract 或正式 spec 的业务内容。
 
 ## 卸载
 

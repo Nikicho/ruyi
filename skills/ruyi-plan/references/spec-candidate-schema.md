@@ -37,14 +37,7 @@
 - `local_only: true`
 - `status`
 
-状态允许：
-
-- `pending`：待人工确认。
-- `merged`：已通过评审，并生成手动合入 patch。
-- `rejected`：已拒绝。
-- `superseded`：已被其他候选取代。
-
-旧版 `candidate` 视为 `pending`。
+新 candidate 的状态仅允许 `pending`：待人工确认。旧版状态由 `ruyi-upgrade` 报告人工处理，不作为新流程输出。
 
 ## 4. 正文结构
 
@@ -67,5 +60,6 @@
 - 候选必须说明适用范围。
 - 候选必须说明哪些内容不应沉淀。
 - team 层内容只形成候选，不自动写入 `.ruyi-team`。
-- 候选合入正式 spec 只能通过 `ruyi-spec-merge` 生成 patch 后由用户或维护者人工执行。
+- 用户确认采用项目层候选时，直接更新当前正式 spec，再由 `ruyi-spec-merge` 删除已处理 candidate。
+- 用户拒绝或以更新提案取代候选时，直接删除本地 candidate，不归档。
 - candidate 可以被 agent 默认读取，但只能作为待确认信号，不能覆盖正式 spec。

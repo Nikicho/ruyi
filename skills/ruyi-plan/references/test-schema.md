@@ -85,8 +85,6 @@ tests/<module>/<feature>/<contract-date>.md
 - 结论：passed / passed-with-notes / failed
 ```
 
-## 7. 与 workspace 的关系
+## 7. 与本地 checkpoint 的关系
 
-`tests/` 保存主流程正式验证结果。
-
-`.ruyi/workspace/` 只保存临时分析、草稿和过程材料，不能作为 `explain` 的正式门禁依据。
+`tests/` 保存主流程正式验证结果。`.ruyi/tasks/` 只保存本地执行恢复进度，不能作为 `explain` 的正式门禁依据，也不能替代 test 证据。

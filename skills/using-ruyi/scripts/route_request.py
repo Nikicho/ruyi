@@ -112,27 +112,6 @@ def explain_path(project: Path, payload: dict[str, Any]) -> Path:
     return project / ".ruyi" / "explain" / payload["module"] / payload["feature"] / f"{payload['date']}.md"
 
 
-def candidate_path(project: Path, payload: dict[str, Any]) -> Path:
-    return project / ".ruyi" / "spec-candidates" / payload["module"] / payload["feature"] / f"{payload['date']}.md"
-
-
-def has_spec_candidate_for_explain(project: Path, payload: dict[str, Any]) -> bool:
-    root = project / ".ruyi" / "spec-candidates"
-    if not root.is_dir():
-        return False
-    expected = f".ruyi/explain/{payload['module']}/{payload['feature']}/{payload['date']}.md"
-    legacy = candidate_path(project, payload)
-    if legacy.is_file():
-        return True
-    for candidate in root.rglob("*.md"):
-        if candidate.name == "EXPECTED.md":
-            continue
-        frontmatter = parse_frontmatter(candidate)
-        if frontmatter.get("source_explain") == expected and frontmatter.get("status", "pending") in ("pending", "candidate"):
-            return True
-    return False
-
-
 def has_in_progress_task(project: Path, payload: dict[str, Any]) -> bool:
     directory = task_dir(project, payload)
     if not directory.is_dir():
@@ -418,7 +397,7 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
         approval = parse_frontmatter(explain_path(project, payload)).get("approval")
         if approval != "approved":
             return route("approve", ["approval-not-approved"], "explain 未审批通过，不能进入知识沉淀。")
-        return route("spec-evolve", [], "explain 已审批通过，可以生成 spec candidate。")
+        return route("spec-evolve", [], "explain 已审批通过，可以判断是否直接更新正式 spec 或暂存本地 candidate。")
 
     return route_continue(project, payload)
 
@@ -473,10 +452,7 @@ def route_continue(project: Path, payload: dict[str, Any]) -> dict[str, Any]:
     if approval != "approved":
         return route("approve", ["approval-pending"], "下一步是审批 explain。")
 
-    if not has_spec_candidate_for_explain(project, payload):
-        return route("spec-evolve", ["spec-candidate-not-found"], "下一步是生成 spec candidate。")
-
-    return route("complete", [], "该 contract 的 Ruyi 主流程已完成。")
+    return route("complete", [], "该 contract 的 Ruyi 主流程已完成；如有可复用规则，可按需进入 spec-evolve。")
 
 
 def main(argv: list[str] | None = None, *, emit: bool = True) -> str:

@@ -37,23 +37,19 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 5. 读取 `references/planning-discipline.md`。
 6. 将自然语言测试用例映射为验证策略。
 7. 如果 contract 存在 `## 接口范围`，补齐 `## 接口对接`：调用层、类型定义、mock 策略、错误处理、状态管理。
-8. 拆分 task，并明确每个 task 的写入范围和完成条件。
+8. 在 plan 中拆分实施步骤并明确写入范围和完成条件；仅预计跨轮次实现时后续按需生成本地 task checkpoint。
 9. 明确实施顺序、依赖和风险。
-10. 用户确认后，写入 plan，并按需生成 task。
+10. 用户确认后，写入 plan；进入实现后按需生成本地 task checkpoint。
 
 ## 5. 重评模式
 
 类型 B 中途变更后进入重评模式：
 
 1. 读取最新 contract 的 `## 修订记录`。
-2. 列出当前 plan 中所有 task 的状态。
-3. 判断每个 task 是否仍有效：
-   - 已 `done` 但被新需求取代，标记为 `superseded`。
-   - `in-progress` 且与新需求冲突，暂停并转为 `superseded` 或调整。
-   - `pending` 且仍有效，保留。
-   - 新增需求，创建新 task，编号继续递增。
+2. 评估当前 plan 的步骤、顺序和写入边界是否仍有效。
+3. 如果已有本地 task checkpoint 与重评后的 plan 不一致，删除旧 checkpoint，进入实现阶段时按当前 plan 重建。
 4. plan 文件追加 `## 修订记录`，引用 contract 修订条目。
-5. 不允许只新增 task 而不评估已有 task 的影响。
+5. 不允许只追加实现步骤而不评估已有 plan 的影响。
 
 ## 6. 产物要求
 

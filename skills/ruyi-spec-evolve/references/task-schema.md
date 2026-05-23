@@ -2,9 +2,9 @@
 
 ## 1. 对象定位
 
-`task` 是围绕某个具体 plan 的执行单元，不是需求定义。
+`task` 是围绕某个具体 plan 的本地执行 checkpoint，不是需求定义，也不是团队交付凭证。
 
-一个 plan 可以拆成多个 task。
+一个 plan 预计跨轮次或多个文件组执行时，可以按需创建多个 task；短实现无需创建。
 
 ## 2. 路径规则
 
@@ -14,7 +14,7 @@
 tasks/<module>/<feature>/<contract-date>/task-01.md
 ```
 
-任务文件按 `task-01.md`、`task-02.md` 递增。
+任务文件按 `task-01.md`、`task-02.md` 递增；`.ruyi/tasks/` 默认 gitignored，且不进入 `.ruyi/INDEX.md`。
 
 ## 3. 头部元信息
 
@@ -29,12 +29,8 @@ tasks/<module>/<feature>/<contract-date>/task-01.md
 - `pending`
 - `in-progress`
 - `done`
-- `superseded`
-- `cancelled`
 
-`superseded` 表示该 task 被中途变更后的新 task 取代，agent 不应继续执行。此状态必须同时写明 `superseded_by: <task-id>`。
-
-`cancelled` 表示用户撤销，未被新 task 取代。
+plan 变化导致 checkpoint 不再有效时，删除旧本地 task 并按当前 plan 重建，不保留历史状态。
 
 ## 4. 正文结构
 
@@ -48,12 +44,13 @@ tasks/<module>/<feature>/<contract-date>/task-01.md
 ## 执行步骤
 ## 风险与关注点
 ## 完成标准
-## 自检与 Review 结论
+## 当前进度
+## 本地自检记录
 ```
 
 ## 5. 硬门禁
 
-- task 必须对应某个具体 plan 和 contract 日期版本。
+- task 必须对应某个已确认 plan 和 contract 日期版本。
 - task 不定义需求，只定义执行。
-- `done` 状态 task 必须包含自检与 review 结论，供 explain 的代码质量简报引用。
-- task 不能整体升级为 `spec`，只能作为提炼来源。
+- task 不提交 git，不作为进入 test 或 explain 的门禁。
+- 团队可复用的自检、质量与风险结论必须写入正式 test 或 explain，不能只留在 task。

@@ -47,12 +47,7 @@ plan 的 `## 接口对接` 只回答前端怎么接，不重新定义后端 API�
 
 ## 6. 重评模式
 
-类型 B 中途变更后，plan 不允许只追加新 task。必须先评估旧 task：
-
-- `done` 且被新需求取代：标 `superseded`。
-- `in-progress` 且与新需求冲突：暂停并转 `superseded` 或调整。
-- `pending` 且仍有效：保留。
-- 新增需求：创建新 task。
+类型 B 中途变更后，plan 不允许只追加新步骤。必须先评估现有步骤、顺序与写入边界；旧本地 checkpoint 与新 plan 不一致时删除并按当前 plan 重建。
 
 ## 7. 反模式
 

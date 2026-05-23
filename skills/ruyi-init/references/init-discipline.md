@@ -30,8 +30,8 @@ baseline contract 的事实来源可以是历史文档蒸馏，也可以是现�
 - 初始化必须创建 `.ruyi/spec/api.md`，但不读取项目代码推断 API 列表。
 - 初始化必须创建 `.ruyi/spec/references/shared/INDEX.md` 和 `.ruyi/spec/references/modules/INDEX.md`。
 - 初始化必须为 spec 内容写入 confidence，区分 `observed / distilled / claimed / open / confirmed_by_user`。
-- 快速开始不生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
-- 完整迁移必须生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
+- 快速开始不生成 `docs-registry.md` 和 `interview-bank.md`。
+- 完整迁移必须生成 `docs-registry.md`、`interview-bank.md` 与经确认的 baseline contract；不保留一次性评估笔记目录。
 - 用户未明确选择快速开始或完整迁移前，不允许写入 `.ruyi/`，也不允许用默认值代替用户选择。
 - 不批量生成历史交付 contract、plan、test、explain；只允许按模块生成当前业务事实 baseline contract。
 
@@ -61,7 +61,7 @@ baseline contract 的事实来源可以是历史文档蒸馏，也可以是现�
 完整迁移采用 evaluate / distill / interview / fallback：
 
 - evaluate：扫描 README、CHANGELOG、docs、mock 等候选文档源，只输出候选和抽样，不默认信任。
-- distill：部分有用文档只抽 10-20 条关键事实进 spec，不翻译全文。
+- distill：部分有用文档只抽 10-20 条当前业务事实进 baseline contract，不翻译全文。
 - interview：用封闭式问卷收集鉴权、错误处理、路由约定等关键答案，答案写入 `interview-bank.md`。
 - fallback：用户对必问问题答“不知道”达到 3 条，或项目无可用文档时，生成 `open` 占位并在报告中提示知识基线薄弱。
 
@@ -79,7 +79,7 @@ baseline contract 的事实来源可以是历史文档蒸馏，也可以是现�
 | --- | --- |
 | 有用 | 录入 `.ruyi/spec/docs-registry.md` |
 | 部分有用 | 蒸馏关键事实进 baseline contract，源本身不录入 registry |
-| 陈旧 / 已废 / 误导 | 不录入，只写入 `workspace/init-evaluation-notes.md` |
+| 陈旧 / 已废 / 误导 | 不录入、不留存 |
 
 ## 5. Confidence 规则
 

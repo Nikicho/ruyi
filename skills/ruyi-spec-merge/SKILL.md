@@ -34,7 +34,7 @@ description: Use when local Ruyi spec candidates need human review, adoption int
 ```bash
 python <skills-dir>/ruyi-spec-merge/scripts/merge_list.py --project <project>
 python <skills-dir>/ruyi-spec-merge/scripts/merge_diff.py --project <project> --candidate <path>
-python <skills-dir>/ruyi-spec-merge/scripts/merge_apply.py --project <project> --candidate <path> --decision <merged|rejected|superseded> --reason <reason>
+python <skills-dir>/ruyi-spec-merge/scripts/merge_apply.py --project <project> --candidate <path> --decision <merged|deleted> --reason <reason>
 ```
 
 脚本不判断业务正确性；`decision: merged` 对项目层候选要求对应正式 spec 已存在，避免未合入正式规则便删除候选。

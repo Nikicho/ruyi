@@ -136,8 +136,7 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 | 非 tiny 且缺少 explain | `ruyi-explain` | 要求生成开发简报 |
 | explain `approval: changes-requested` 且有 `return_stage` | 对应返回阶段 | 按审批结论退回 |
 | explain `approval` 不是 `approved` | `ruyi-approve` | 要求审批 |
-| 缺少 spec-candidate | `ruyi-spec-evolve` | 判断是否沉淀候选 |
-| spec-candidate 已存在 | 完成 | 主流程闭环 |
+| explain `approval: approved` | 完成 | 主流程闭环；存在可复用规则时按需进入 `ruyi-spec-evolve` |
 
 禁止行为：
 

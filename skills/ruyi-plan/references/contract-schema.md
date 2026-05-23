@@ -45,6 +45,7 @@ contracts/<module>/<feature>/baseline.md
 ## 验收标准
 ## 测试用例
 ## 修订记录
+## 返工记录
 ```
 
 `## 修复事实` 仅在 `type: fix` 时必填，必须包含：
@@ -76,7 +77,7 @@ contracts/<module>/<feature>/baseline.md
 - 替换时机：Apifox / Swagger 发布后删除本段，改为链接权威源
 ```
 
-`## 修订记录` 在中途变更类型 A/B 时使用；类型 C 新建日期 contract，旧 contract 只在 frontmatter 写 `superseded_by`。
+`## 修订记录` 在中途变更类型 A/B 时使用；类型 C 新建日期 contract，旧 contract 只在 frontmatter 写 `superseded_by`。`## 返工记录` 在已审批原需求被重新打开时使用。
 
 ## 4. 演进规则
 
@@ -87,22 +88,22 @@ contracts/<module>/<feature>/baseline.md
   - 类型 A：微调，不改业务规则、验收标准、接口路径/方法，不影响已完成产物，原地修订并追加 `## 修订记录`。
   - 类型 B：范围扩展或策略调整，改需求范围、接口范围、接口对接或影响 task，contract 原地修订，plan 进入重评。
   - 类型 C：语义变化，改用户故事核心、业务规则、已确认验收标准或需求类型，新建日期 contract，旧 contract 加 `superseded_by`。
-  - 类型 D：审批后变化，视为新需求，新 contract 加 `derived_from`，不修改已审批产物。
+  - 类型 D：审批后返工，重开同一 contract，写入返工记录并重置当前交付状态；不新建 contract。
 
 ## 5. 状态规则
 
 - `draft`：草稿，尚未确认，不能进入 plan。
 - `confirmed`：已确认，可进入 plan。
+- `reopened`：已审批原需求因澄清遗漏或交付返工而重新打开，需重新澄清后回到 `confirmed`。
 
 frontmatter 允许包含：
 
 - `superseded_by`：类型 C 使用，指向取代当前 contract 的新日期文件。
-- `derived_from`：类型 D 使用，指向产生本次新需求的旧 contract。
 
 ## 6. 分档规则
 
 - `tiny` 必须仍然有 contract、implement 和 test 证据。
-- `tiny` 跳过 plan、task、explain、approve 和 spec-candidate；如后续发现范围扩大，必须升级为 `standard` 并补 plan。
+- `tiny` 跳过 plan、explain 和 approve；如后续发现范围扩大，必须升级为 `standard` 并补 plan。
 - `tiny` 不允许包含业务规则变化，不允许用于 `fix` 类型。
 - `standard` 默认走完整主流程。
 - `large` 必须进入 plan，且 plan 应拆分多个 task。

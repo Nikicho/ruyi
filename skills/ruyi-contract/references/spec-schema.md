@@ -116,7 +116,7 @@ needs_review: true | false
 - 项目结构事实、长期规则和跨模块约束进入 `spec`。
 - 模块业务事实进入 baseline contract。
 - 一次性需求内容进入 `contract`。
-- 执行安排进入 `task`。
+- 跨轮次执行恢复点进入本地 `task`，不作为团队规范依据。
 - 交付结果进入 `explain`。
 - 不确定但影响理解的问题进入 `open-questions.md`。
-- 首版知识沉淀先生成本地 `spec-candidate`，不自动改写正式 `spec`。
+- 用户确认的项目层长期规则直接更新当前正式 `spec`；只有延后审视或代码反推待审内容进入本地 `spec-candidate`。

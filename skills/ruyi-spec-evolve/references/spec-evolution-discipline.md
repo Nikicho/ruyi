@@ -19,7 +19,7 @@ spec-evolve 阶段负责把一次开发中已经被验证的、可复用的经�
 - 未审批通过时，不自动沉淀正式规范。
 - explain 缺少 contract、plan 或 test 锚点时，不生成候选。
 - 没有证据来源或适用范围时，不生成候选。
-- 不允许把 `contract / task / explain / project-actions / workspace` 原样转成 spec。
+- 不允许把 `contract / test / explain / project-actions` 或本地 checkpoint 原样转成 spec。
 - 首版不自动回写 team 层。
 - 没有复用价值的内容，不沉淀。
 
@@ -28,10 +28,10 @@ spec-evolve 阶段负责把一次开发中已经被验证的、可复用的经�
 1. 读取 explain 和审批结论。
 2. 判断是否有可沉淀内容。
 3. 区分项目特有经验和团队共性经验。
-4. 项目特有经验生成 `.ruyi/spec-candidates/` 候选。
+4. 项目特有经验经用户确认后直接更新正式 spec；延后审视时才生成 `.ruyi/spec-candidates/` 候选。
 5. 团队共性经验只形成 team 候选说明。
 6. 无法确认的内容进入候选的“待确认问题”。
-7. 不自动改写正式 spec。
+7. 未经用户确认不改写正式 spec。
 
 ## 4. 可沉淀内容
 

@@ -7,7 +7,7 @@ from pathlib import Path
 from merge_common import parse_frontmatter_text
 
 
-DECISIONS = ("merged", "rejected", "superseded")
+DECISIONS = ("merged", "deleted")
 
 
 def apply_merge(project_path: str | Path, candidate_path: str | Path, decision: str, reason: str) -> dict:

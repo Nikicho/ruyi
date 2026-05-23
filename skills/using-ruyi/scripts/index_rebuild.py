@@ -89,7 +89,6 @@ def contract_summary(path: Path) -> dict[str, str]:
         "size": frontmatter.get("size", ""),
         "status": frontmatter.get("status", "待补充"),
         "superseded_by": frontmatter.get("superseded_by", ""),
-        "derived_from": frontmatter.get("derived_from", ""),
     }
 
 
@@ -118,7 +117,7 @@ def merge_feature_meta(current: dict[str, str], candidate: dict[str, str]) -> di
         current["size"] = candidate["size"]
     if status_rank(candidate.get("status", "")) >= status_rank(current.get("status", "")):
         current["status"] = candidate.get("status", current.get("status", "待补充"))
-    for key in ("superseded_by", "derived_from"):
+    for key in ("superseded_by",):
         if candidate.get(key):
             current[key] = candidate[key]
     return current
@@ -174,8 +173,6 @@ def rebuild_index(project_path: str | Path) -> dict:
             lines.append(f"- 状态：{meta.get('status') or '待补充'}")
             if meta.get("superseded_by"):
                 lines.append(f"- 已被取代：{meta['superseded_by']}")
-            if meta.get("derived_from"):
-                lines.append(f"- 来源：{meta['derived_from']}")
             for date in sorted(grouped[module][feature]["artifacts"]):
                 kinds = " / ".join(sorted(set(grouped[module][feature]["artifacts"][date])))
                 lines.append(f"- {date} {kinds}")

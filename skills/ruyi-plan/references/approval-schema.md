@@ -17,8 +17,6 @@
 - `pending`：待审批，只能由 explain 生成阶段写入。
 - `approved`：接受交付，可进入知识沉淀判断。
 - `changes-requested`：需要修改，必须返回 contract、plan、implement 或 test。
-- `conditionally-approved`：有条件接受，必须写明条件、后续动作和返回阶段。
-- `rejected`：拒绝交付，必须写明原因和返回阶段。
 
 ## 3. 正文结构
 
@@ -30,11 +28,10 @@
 - 审批状态：[status]
 - 审批说明：[reason]
 - 返回阶段：[contract|plan|implement|test|无需返回。]
-- 条件：[condition]
 - 后续动作：[follow-up]
 ```
 
-`条件` 和 `后续动作` 只在需要时出现。
+`后续动作` 只在不阻碍当前交付通过、但仍需记录跟进事项时出现。阻碍交付的条件应使用 `changes-requested`。
 
 ## 4. 规则
 
@@ -42,5 +39,4 @@
 - explain 必须锚定 contract、plan 和 test。
 - 只有 `approval: pending` 的 explain 可以被审批。
 - 非 `approved` 状态必须写明返回阶段。
-- `conditionally-approved` 必须写明条件。
 - 审批不修改 contract、plan，不补写 test，不直接更新 spec。

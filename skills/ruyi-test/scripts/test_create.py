@@ -207,6 +207,16 @@ def create_test_result(project_path: str | Path, payload: dict[str, Any]) -> dic
 
     target = test_path(project, payload)
     if target.exists():
+        if parse_frontmatter(target).get("result") == "pending":
+            target.write_text(render_test_result(payload), encoding="utf-8")
+            return {
+                "created": False,
+                "updated": True,
+                "reason": None,
+                "message": "返工后的 test 当前结果已更新。",
+                "path": str(target),
+                "index": rebuild_index_if_available(project),
+            }
         return {
             "created": False,
             "reason": "already-exists",

@@ -468,10 +468,8 @@ def route_continue(project: Path, payload: dict[str, Any]) -> dict[str, Any]:
 
     approval = parse_frontmatter(explain).get("approval")
     return_stage = parse_frontmatter(explain).get("return_stage")
-    if approval in ("changes-requested", "rejected") and return_stage in ("contract", "plan", "implement", "test"):
+    if approval == "changes-requested" and return_stage in ("contract", "plan", "implement", "test"):
         return route(return_stage, ["approval-returned"], f"审批未通过，需返回 {return_stage} 阶段处理。")
-    if approval == "conditionally-approved":
-        return route("approve", ["approval-conditional"], "explain 为条件通过，需先确认条件是否已处理。")
     if approval != "approved":
         return route("approve", ["approval-pending"], "下一步是审批 explain。")
 

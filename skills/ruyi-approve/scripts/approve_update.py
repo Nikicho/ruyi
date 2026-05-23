@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 
-APPROVAL_STATUSES = ("approved", "changes-requested", "conditionally-approved", "rejected")
+APPROVAL_STATUSES = ("approved", "changes-requested")
 RETURN_STAGES = ("contract", "plan", "implement", "test")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -44,8 +44,6 @@ def validate_payload(payload: dict[str, Any]) -> None:
     elif return_stage:
         raise ValueError("return_stage is not allowed for approved")
 
-    if payload["status"] == "conditionally-approved" and not payload.get("condition"):
-        raise ValueError("condition is required for conditionally-approved")
 
 
 def is_initialized(project: Path) -> bool:
@@ -115,8 +113,6 @@ def render_approval_section(payload: dict[str, Any]) -> str:
         f"- 返回阶段：{return_stage}",
     ]
 
-    if payload.get("condition"):
-        lines.append(f"- 条件：{payload['condition']}")
     if payload.get("follow_up"):
         lines.append(f"- 后续动作：{payload['follow_up']}")
 
@@ -200,8 +196,6 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
     frontmatter["approval"] = payload["status"]
     if payload.get("return_stage"):
         frontmatter["return_stage"] = payload["return_stage"]
-    if payload.get("condition"):
-        frontmatter["condition"] = payload["condition"]
     new_text = render_frontmatter(frontmatter) + "\n" + body.strip() + "\n\n" + render_approval_section(payload)
     target.write_text(new_text, encoding="utf-8")
     index_result = rebuild_index_if_available(project)
@@ -224,7 +218,6 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--status", required=True, choices=APPROVAL_STATUSES, help="Approval status")
     parser.add_argument("--reason", required=True, help="Approval reason")
     parser.add_argument("--return-stage", choices=RETURN_STAGES, help="Return stage for non-approved decisions")
-    parser.add_argument("--condition", help="Condition for conditionally-approved decisions")
     parser.add_argument("--follow-up", help="Follow-up action")
     args = parser.parse_args(argv)
 
@@ -235,7 +228,6 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
         "status": args.status,
         "reason": args.reason,
         "return_stage": args.return_stage,
-        "condition": args.condition,
         "follow_up": args.follow_up,
     }
     output = json.dumps(update_approval(args.project, payload), ensure_ascii=False, indent=2)

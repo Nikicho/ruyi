@@ -1,6 +1,6 @@
 ---
 name: ruyi-approve
-description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is approval. Handles PM approval, rejection, conditional acceptance, or return decisions to contract, plan, coding, or test.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is approval. Handles PM approval or requested changes returned to contract, plan, coding, or test.
 ---
 
 # Ruyi Approve
@@ -44,19 +44,13 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 确认 explain 已经生成，并且用户已经给出明确审批意见后，可以使用脚本记录审批结论：
 
 ```bash
-python <skills-dir>/ruyi-approve/scripts/approve_update.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --status <approved|changes-requested|conditionally-approved|rejected> --reason <reason>
+python <skills-dir>/ruyi-approve/scripts/approve_update.py --project <project> --module <module> --feature <feature> --date <YYYY-MM-DD> --status <approved|changes-requested> --reason <reason>
 ```
 
 非 `approved` 状态必须追加：
 
 ```bash
 --return-stage <contract|plan|implement|test>
-```
-
-`conditionally-approved` 还必须追加：
-
-```bash
---condition <condition>
 ```
 
 脚本职责：

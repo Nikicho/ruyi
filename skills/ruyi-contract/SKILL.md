@@ -59,7 +59,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
    - 类型 A：原地修订相关字段，追加 `## 修订记录`。
    - 类型 B：原地修订相关字段，追加 `## 修订记录`，然后提示进入 `ruyi-plan` 重评模式。
    - 类型 C：新建日期 contract，旧 contract frontmatter 加 `superseded_by`。
-   - 类型 D：新建 contract，frontmatter 加 `derived_from`，不修改已审批产物。
+   - 类型 D：重开同一 contract，写入 `status: reopened` 和 `## 返工记录`；按返回阶段重置当前 plan/test/explain 状态，不新建 contract。
 3. 未确认分类时，不允许落盘修订。
 4. 修订后必须刷新或提示刷新 `.ruyi/INDEX.md`。
 
@@ -75,7 +75,7 @@ python scripts/contract_create.py `
   --date <YYYY-MM-DD> `
   --type <new-feature|fix|refactor|change> `
   --size <tiny|standard|large> `
-  --status <draft|confirmed> `
+  --status <draft|confirmed|reopened> `
   --title <功能名称> `
   --goal <业务目标> `
   --story <用户故事> `
@@ -88,17 +88,25 @@ python scripts/contract_create.py `
 脚本规则：
 
 - 要求项目已初始化，至少存在 `.ruyirc` 和 `.ruyi/contracts/`。
-- 只创建新 contract，不覆盖已有文件。
+- 默认只创建新 contract；类型 D 被重开后，允许在同路径更新当前有效内容并保留返工记录。
 - `module / feature` 使用小写字母、数字和连字符。
 - `date` 固定为 `YYYY-MM-DD`。
 - `type` 只允许 `new-feature / fix / refactor / change`。
 - `size` 只允许 `tiny / standard / large`；默认 `standard`。
 - `fix` 不能使用 `tiny`。
-- `status` 只允许 `draft / confirmed`；只有 `confirmed` contract 可进入 plan。
+- `status` 只允许 `draft / confirmed / reopened`；只有 `confirmed` contract 可进入 plan。
 - `test-case` 至少 1 条，用自然语言描述用户路径、输入、预期结果或边界场景。
 - `confirmed` 且 `size` 为 `standard / large` 时，至少 3 条测试用例，覆盖正常、边界、异常。
 - `api-scope` 只列本次涉及接口；完整 API 文档应引用后端权威源，不写入 contract。
 - 脚本只负责落盘，不负责替代需求澄清和用户确认。
+
+类型 D 的重开动作使用：
+
+```powershell
+python scripts/reopen_delivery.py --project <project-root> --module <module-slug> --feature <feature-slug> --date <YYYY-MM-DD> --reason <返工原因> --return-stage <contract|plan|implement|test>
+```
+
+该动作只更新原交付文件的当前状态并记录返工原因，不写 `derived_from`。
 
 ## 7. 产物要求
 

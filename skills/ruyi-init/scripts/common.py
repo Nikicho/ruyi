@@ -31,13 +31,8 @@ REQUIRED_RUYI_DIRS = (
     ".ruyi/spec/references/modules",
     ".ruyi/contracts",
     ".ruyi/plans",
-    ".ruyi/tasks",
     ".ruyi/tests",
     ".ruyi/explain",
-    ".ruyi/spec-candidates",
-    ".ruyi/spec-archive",
-    ".ruyi/spec-patches",
-    ".ruyi/workspace",
 )
 
 REQUIRED_RUYI_FILES = (
@@ -45,19 +40,15 @@ REQUIRED_RUYI_FILES = (
     ".ruyi/README.md",
     ".ruyi/INDEX.md",
     ".ruyi/project-actions.md",
-    ".ruyi/workspace/README.md",
     "CLAUDE.md",
     ".claude/settings.json",
     ".claude/commands/ruyi.md",
     *tuple(f".ruyi/spec/{name}" for name in SPEC_FILES),
 )
 
-WORKSPACE_GITIGNORE_RULES = (
-    ".ruyi/workspace/**",
-    "!.ruyi/workspace/README.md",
+LOCAL_GITIGNORE_RULES = (
+    ".ruyi/tasks/**",
     ".ruyi/spec-candidates/**",
-    ".ruyi/spec-archive/**",
-    ".ruyi/spec-patches/**",
 )
 
 
@@ -85,11 +76,11 @@ def write_if_missing(path: str | Path, content: str) -> bool:
 
 
 def append_gitignore_rules(path: str | Path) -> bool:
-    """Append Ruyi workspace ignore rules if they are absent."""
+    """Append Ruyi local runtime ignore rules if they are absent."""
     target = Path(path)
     existing = target.read_text(encoding="utf-8") if target.exists() else ""
     lines = existing.splitlines()
-    missing = [rule for rule in WORKSPACE_GITIGNORE_RULES if rule not in lines]
+    missing = [rule for rule in LOCAL_GITIGNORE_RULES if rule not in lines]
     if not missing:
         return False
 

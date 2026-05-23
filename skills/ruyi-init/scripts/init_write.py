@@ -16,7 +16,9 @@ from common import (
 )
 
 
-RUYIRC_CONTENT = """layers:
+RUYIRC_CONTENT = """schema_version: 2
+
+layers:
   - name: team
     path: .ruyi-team
     optional: true
@@ -43,22 +45,10 @@ def project_readme() -> str:
 - `spec/`：项目长期有效的事实和规范。
 - `contracts/`：每次需求的设计与验收定义。
 - `plans/`：由 contract 转化出的开发计划、测试策略和 task 拆分。
-- `tasks/`：由 plan 拆分出的开发任务。
+- `tasks/`：需要跨轮次恢复实现进度时按需创建的本地 checkpoint，不提交 git。
 - `tests/`：每次 contract 对应的正式验证结果。
 - `explain/`：面向 PM 的开发简报。
-- `spec-candidates/`：本地临时知识沉淀候选，默认不提交 git，不自动改写正式 spec。
-- `spec-archive/`：本地 candidate 处理归档，默认不提交 git。
-- `spec-patches/`：本地人工合入补丁，默认不提交 git。
-- `workspace/`：临时过程材料，不提交正式内容。
-"""
-
-
-def workspace_readme() -> str:
-    return """# Ruyi Workspace
-
-该目录用于临时分析、草稿和过程材料。
-
-除本 README 外，`workspace/` 默认不应提交到 git。
+- `spec-candidates/`：用户延后审视或代码反推批量产出时按需创建的本地候选，不提交 git。
 """
 
 
@@ -285,7 +275,6 @@ def docs_registry(facts: dict[str, Any]) -> str:
     return frontmatter("confirmed_by_user" if sources else "open", "init 文档评估", needs_review=not bool(sources)) + f"""# 项目外部文档入口
 
 > 只记录已评估并确认仍有参考价值的入口；陈旧 / 已废文档不录入。
-> 完整评估痕迹见 `.ruyi/workspace/init-evaluation-notes.md`。
 
 {body}"""
 
@@ -308,41 +297,6 @@ def interview_bank(facts: dict[str, Any]) -> str:
             sections.append(f"- {values}")
         sections.append("")
     return frontmatter("confirmed_by_user", "init 澄清问卷") + "# 澄清问卷答案\n\n" + "\n".join(sections)
-
-
-def evaluation_notes(facts: dict[str, Any]) -> str:
-    registered = useful_sources(facts)
-    partial = partial_sources(facts)
-    discarded = discarded_sources(facts)
-
-    def source_lines(items: list[dict[str, Any]], empty: str) -> str:
-        if not items:
-            return empty
-        lines: list[str] = []
-        for item in items:
-            path = item.get("path") or item.get("url") or "未知来源"
-            reason = item.get("reason") or item.get("summary") or item.get("content") or "未填写评估说明。"
-            lines.append(f"### {path}\n- 评估：{reason}")
-            if item.get("distilled_to") or item.get("baseline_contract") or item.get("contract_target"):
-                target = safe_baseline_contract_target(item, facts)
-                lines.append(f"- 蒸馏目标：contracts/{target}")
-        return "\n\n".join(lines)
-
-    return f"""# Init 评估笔记（{today()}）
-> 一次性记录，不进 agent 默认上下文。仅供后续 init 复盘或团队回顾。
-
-## 已录入 docs-registry（{len(registered)} 条）
-
-{source_lines(registered, "暂无。")}
-
-## 已蒸馏关键事实进 baseline contract（{len(partial)} 条）
-
-{source_lines(partial, "暂无。")}
-
-## 未录入也未蒸馏（{len(discarded)} 条）
-
-{source_lines(discarded, "暂无。")}
-"""
 
 
 def baseline_contracts(facts: dict[str, Any]) -> dict[str, str]:
@@ -488,7 +442,6 @@ def brownfield_result(facts: dict[str, Any]) -> dict[str, Any]:
         "interview_answer_count": sum(len(value) if isinstance(value, dict) else 1 for value in (brownfield_facts(facts).get("interview_answers") or {}).values()),
         "open_topics": brownfield_facts(facts).get("open_topics") or [],
         "fallback": fallback_required(facts),
-        "evaluation_notes": ".ruyi/workspace/init-evaluation-notes.md",
     }
 
 
@@ -620,7 +573,6 @@ def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any
     create_file(project, ".ruyi/README.md", project_readme(), created, skipped)
     create_file(project, ".ruyi/INDEX.md", project_index(), created, skipped)
     create_file(project, ".ruyi/project-actions.md", project_actions(), created, skipped)
-    create_file(project, ".ruyi/workspace/README.md", workspace_readme(), created, skipped)
     create_file(project, ".claude/commands/ruyi.md", slash_command(), created, skipped)
     append_claude_md(project, created, skipped, updated)
 
@@ -634,9 +586,6 @@ def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any
         for filename, content in fallback_specs().items():
             create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
         notes.append("知识基线非常薄弱：本次 init 只记录 observed/open 事实，后续 contract 阶段必须更仔细澄清。")
-
-    if is_full_migration(facts):
-        create_file(project, ".ruyi/workspace/init-evaluation-notes.md", evaluation_notes(facts), created, skipped)
 
     if not facts.get("no_hook"):
         merge_claude_settings(project, skipped, updated, notes)

@@ -43,8 +43,8 @@ description: Use when an existing frontend project needs to be initialized for R
 4. 读取项目事实；完整迁移时同时读取候选文档源和 brownfield 必问问卷。
 5. 生成 `.ruyirc`。
 6. 生成 `.ruyi/spec/` 基础锚点、拆分后的 baseline、`api.md` 和 `references/shared|modules` 索引；spec 只放长期规则、索引和跨模块约束。
-7. 完整迁移时生成 `docs-registry.md`、`interview-bank.md`、`workspace/init-evaluation-notes.md`，并把蒸馏/代码反推的模块业务事实写入 `.ruyi/contracts/<module>/_baseline/current.md` 或 `.ruyi/contracts/<module>/<feature>/baseline.md`。
-8. 创建 `contracts / plans / tasks / tests / explain / spec-candidates / spec-archive / spec-patches / workspace` 目录。
+7. 完整迁移时生成 `docs-registry.md`、`interview-bank.md`，并把蒸馏/代码反推的模块业务事实写入 `.ruyi/contracts/<module>/_baseline/current.md` 或 `.ruyi/contracts/<module>/<feature>/baseline.md`。
+8. 创建正式共享目录 `contracts / plans / tests / explain`；`tasks / spec-candidates` 仅在后续本地需要时按需创建。
 9. 生成 `.ruyi/project-actions.md`。
 10. 生成 `.ruyi/INDEX.md` 新格式占位。
 11. 写入或合并 `.claude/settings.json` 的入口保护 hook。
@@ -67,7 +67,7 @@ description: Use when an existing frontend project needs to be initialized for R
 
 - 保留入口：写入 `docs-registry.md`。
 - 蒸馏关键事实：抽取 10-20 条，按模块写入 baseline contract。
-- 不录入：只写入 `workspace/init-evaluation-notes.md`。
+- 不录入：不写入项目产物。
 
 ### 5.2 外部文档读取
 
@@ -127,7 +127,6 @@ description: Use when an existing frontend project needs to be initialized for R
 - docs-registry.md：<n> 个入口
 - interview-bank.md：<n> 条确认答案
 - <target-baseline-contract>：<n> 条蒸馏事实
-- init-evaluation-notes.md：<n> 条评估记录
 确认写入？
 ```
 
@@ -183,13 +182,8 @@ description: Use when an existing frontend project needs to be initialized for R
 - `.ruyi/spec/references/modules/INDEX.md`
 - `.ruyi/contracts/`
 - `.ruyi/plans/`
-- `.ruyi/tasks/`
 - `.ruyi/tests/`
 - `.ruyi/explain/`
-- `.ruyi/spec-candidates/`
-- `.ruyi/spec-archive/`
-- `.ruyi/spec-patches/`
-- `.ruyi/workspace/README.md`
 - `.ruyi/project-actions.md`
 - `.claude/commands/ruyi.md`
 
@@ -197,15 +191,11 @@ description: Use when an existing frontend project needs to be initialized for R
 
 - `.ruyi/spec/docs-registry.md`
 - `.ruyi/spec/interview-bank.md`
-- `.ruyi/workspace/init-evaluation-notes.md`
 
 允许追加：
 
-- `.gitignore` 中的 `.ruyi/workspace/**`
-- `.gitignore` 中的 `!.ruyi/workspace/README.md`
+- `.gitignore` 中的 `.ruyi/tasks/**`
 - `.gitignore` 中的 `.ruyi/spec-candidates/**`
-- `.gitignore` 中的 `.ruyi/spec-archive/**`
-- `.gitignore` 中的 `.ruyi/spec-patches/**`
 - `.claude/settings.json` 中的 `hooks.UserPromptSubmit`
 - `CLAUDE.md` 中的 `## Ruyi 主流程激活` 段
 

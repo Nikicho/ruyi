@@ -49,9 +49,9 @@ def brownfield_section(write: dict[str, Any]) -> str:
 
 - {fallback}
 
-### 评估笔记
+### 基线合同
 
-- {data.get("evaluation_notes") or ".ruyi/workspace/init-evaluation-notes.md"}
+{bullet_list(data.get("baseline_contracts", []))}
 """
 
 

@@ -15,6 +15,7 @@ from typing import Any
 
 INTENTS = (
     "init",
+    "upgrade",
     "contract",
     "maintain",
     "plan",
@@ -31,13 +32,14 @@ DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 CONTRACT_READY_STATUSES = ("confirmed",)
 PLAN_STATUSES = ("confirmed",)
-TASK_READY_STATUSES = ("done",)
 TEST_PASSING_RESULTS = ("passed", "passed-with-notes")
 EXPLAIN_REQUIRED_LINKS = ("contract", "plan", "test")
 TINY_SIZE = "tiny"
+CURRENT_SCHEMA_VERSION = 2
 
 STAGE_SKILLS = {
     "init": "ruyi-init",
+    "upgrade": "ruyi-upgrade",
     "contract": "ruyi-contract",
     "plan": "ruyi-plan",
     "implement": "ruyi-implement",
@@ -84,6 +86,12 @@ def is_initialized(project: Path) -> bool:
     return (project / ".ruyirc").is_file() and (project / ".ruyi").is_dir()
 
 
+def project_schema_version(project: Path) -> int:
+    text = (project / ".ruyirc").read_text(encoding="utf-8")
+    match = re.search(r"^schema_version:\s*(\d+)\s*$", text, re.MULTILINE)
+    return int(match.group(1)) if match else 1
+
+
 def contract_path(project: Path, payload: dict[str, Any]) -> Path:
     return project / ".ruyi" / "contracts" / payload["module"] / payload["feature"] / f"{payload['date']}.md"
 
@@ -125,18 +133,13 @@ def has_spec_candidate_for_explain(project: Path, payload: dict[str, Any]) -> bo
     return False
 
 
-def has_task(project: Path, payload: dict[str, Any]) -> bool:
-    directory = task_dir(project, payload)
-    return directory.is_dir() and any(directory.glob("task-*.md"))
-
-
-def has_done_task(project: Path, payload: dict[str, Any]) -> bool:
+def has_in_progress_task(project: Path, payload: dict[str, Any]) -> bool:
     directory = task_dir(project, payload)
     if not directory.is_dir():
         return False
     for path in directory.glob("task-*.md"):
         status = parse_frontmatter(path).get("status")
-        if status in TASK_READY_STATUSES:
+        if status == "in-progress":
             return True
     return False
 
@@ -320,6 +323,13 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
             choices=["quick-start", "full-migration"],
         )
 
+    if project_schema_version(project) < CURRENT_SCHEMA_VERSION:
+        return route(
+            "upgrade",
+            ["schema-upgrade-required"],
+            "项目 Ruyi schema 低于当前 skills 要求，先运行 ruyi-upgrade，再继续原请求。",
+        )
+
     validate_stage_payload(payload)
 
     if intent == "continue" and not has_stage_identity(payload):
@@ -334,7 +344,7 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
     if intent == "spec-discover":
         return route("spec-discover", [], "进入 ruyi-spec-discover，从现有代码反推本地 spec candidates。")
 
-    if intent in ("init", "contract"):
+    if intent in ("init", "upgrade", "contract"):
         return route(intent, [], f"进入 {STAGE_SKILLS[intent]}。")
 
     contract = contract_path(project, payload)
@@ -381,12 +391,8 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
     if intent == "implement":
         return route("implement", [], "contract 和 plan 已存在，可以进入实现阶段。")
 
-    if intent == "test" and not has_done_task(project, payload):
-        blocker = "task-not-done" if has_task(project, payload) else "task-not-found"
-        return route("implement", [blocker], "缺少已完成的 task 执行结果，不能进入正式测试。")
-
     if intent == "test":
-        return route("test", [], "contract、plan 和 task 已存在，可以进入测试验证阶段。")
+        return route("test", [], "contract 和 plan 已确认，可以进入测试验证阶段。")
 
     test = test_path(project, payload)
     if intent == "explain" and not test.is_file():
@@ -446,12 +452,12 @@ def route_continue(project: Path, payload: dict[str, Any]) -> dict[str, Any]:
     if plan_status not in PLAN_STATUSES:
         return route("plan", ["plan-not-confirmed"], "下一步是确认 plan。")
 
-    if not has_done_task(project, payload):
-        return route("implement", ["task-not-done"], "下一步是执行 task 并完成实现自检。")
+    if has_in_progress_task(project, payload):
+        return route("implement", ["task-in-progress"], "存在本地执行中的 checkpoint，下一步是继续完成当前实现。")
 
     test = test_path(project, payload)
     if not test.is_file():
-        return route("test", ["test-not-found"], "下一步是生成 test 验证结果。")
+        return route("implement", ["test-not-found"], "尚无正式 test；若实现已完成则进入测试，否则继续按 plan 实现。")
     test_result = parse_frontmatter(test).get("result")
     if test_result not in TEST_PASSING_RESULTS:
         return route("test", ["test-not-passed"], "下一步是修复或补充验证，直到 test 通过。")

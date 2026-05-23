@@ -12,10 +12,8 @@ from typing import Any
 SECTIONS = {
     "contracts": "contract",
     "plans": "plan",
-    "tasks": "task",
     "tests": "test",
     "explain": "explain",
-    "spec-candidates": "spec-candidate",
 }
 
 
@@ -27,9 +25,6 @@ def artifact_identity(project: Path, path: Path) -> tuple[str, str, str, str] | 
     section = parts[0]
     if section not in SECTIONS:
         return None
-    if section == "tasks" and len(parts) >= 5:
-        module, feature, date = parts[1], parts[2], parts[3]
-        return module, feature, date, SECTIONS[section]
     if len(parts) == 4:
         module, feature, filename = parts[1], parts[2], parts[3]
         return module, feature, Path(filename).stem, SECTIONS[section]
@@ -101,10 +96,11 @@ def contract_summary(path: Path) -> dict[str, str]:
 def status_rank(status: str) -> int:
     ranks = {
         "approved": 90,
-        "conditionally-approved": 80,
         "completed": 70,
         "confirmed": 60,
+        "reopened": 55,
         "passed": 50,
+        "pending": 20,
         "draft": 10,
         "待补充": 0,
     }

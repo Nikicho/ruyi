@@ -33,7 +33,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 4. 选择项目已有验证方式。
 5. UI 相关需求优先尝试 fast-browser case/flow/site。
 6. 执行验证命令、UI 自动化或手工验证步骤。
-7. 按 `references/test-schema.md` 记录验证证据、失败项、风险和未覆盖项。
+7. 按 `references/test-schema.md` 以最小证据摘要记录验收、证据和结论；失败、风险、未覆盖项仅在存在时展开。
 8. 验证失败时返回 implement、plan 或 contract。
 9. 验证通过后，允许进入 `ruyi-explain`。
 
@@ -47,12 +47,12 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 
 内容必须包含：
 
-- 验证对象。
-- 验证方式。
-- 验证证据。
-- 与验收标准对照。
+- 验收项与对应证据。
 - 验证结论。
-- 失败、风险或未覆盖项。
+- `failed` 时的失败项。
+- `failed` 或 `passed-with-notes` 时的风险或未覆盖项。
+
+正文保持精简，不把验证对象、方式、UI 自动化、证据和验收对照机械拆成空章节。
 
 ## 6. 脚本调用
 

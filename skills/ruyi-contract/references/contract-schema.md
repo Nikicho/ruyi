@@ -6,6 +6,8 @@
 
 `contract` 是纯业务文档，不写实现细节。
 
+成熟项目完整迁移时允许生成 `baseline contract`，用于记录某模块当前已经存在的业务事实。baseline contract 不是一次新需求，不直接进入 plan / implement / test；后续相关变更应先读取 baseline，再创建本次变更 contract。
+
 `contract` 通过 `size` 字段选择需求分级通道：
 
 - `tiny`：单文件、无业务规则变化、无 UI 状态新增的小改动。
@@ -18,6 +20,8 @@
 
 ```text
 contracts/<module>/<feature>/<YYYY-MM-DD>.md
+contracts/<module>/_baseline/current.md
+contracts/<module>/<feature>/baseline.md
 ```
 
 规则：
@@ -26,6 +30,7 @@ contracts/<module>/<feature>/<YYYY-MM-DD>.md
 - `feature` 使用业务对象名，不使用动作名。
 - `feature` 只要求模块内唯一。
 - 日期格式固定为 `YYYY-MM-DD.md`。
+- `_baseline/current.md` 和 `<feature>/baseline.md` 只用于成熟项目当前业务事实基线，不参与日期版本判断。
 
 ## 3. 正文结构
 

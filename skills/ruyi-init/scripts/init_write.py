@@ -323,19 +323,19 @@ def evaluation_notes(facts: dict[str, Any]) -> str:
             path = item.get("path") or item.get("url") or "未知来源"
             reason = item.get("reason") or item.get("summary") or item.get("content") or "未填写评估说明。"
             lines.append(f"### {path}\n- 评估：{reason}")
-            if item.get("distilled_to"):
-                lines.append(f"- 蒸馏目标：spec/{item['distilled_to']}")
+            if item.get("distilled_to") or item.get("baseline_contract") or item.get("contract_target"):
+                target = safe_baseline_contract_target(item, facts)
+                lines.append(f"- 蒸馏目标：contracts/{target}")
         return "\n\n".join(lines)
 
     return f"""# Init 评估笔记（{today()}）
-
 > 一次性记录，不进 agent 默认上下文。仅供后续 init 复盘或团队回顾。
 
 ## 已录入 docs-registry（{len(registered)} 条）
 
 {source_lines(registered, "暂无。")}
 
-## 已蒸馏关键事实进 spec（{len(partial)} 条）
+## 已蒸馏关键事实进 baseline contract（{len(partial)} 条）
 
 {source_lines(partial, "暂无。")}
 
@@ -345,52 +345,101 @@ def evaluation_notes(facts: dict[str, Any]) -> str:
 """
 
 
-def distilled_specs(facts: dict[str, Any]) -> dict[str, str]:
+def baseline_contracts(facts: dict[str, Any]) -> dict[str, str]:
     if not is_full_migration(facts):
         return {}
-    specs: dict[str, str] = {}
+    contracts: dict[str, dict[str, list[str]]] = {}
     for source in partial_sources(facts):
         facts_list = source.get("distilled_facts") or []
+        observed_list = source.get("observed_facts") or source.get("code_observed_facts") or []
         if not facts_list:
             continue
-        target = safe_distilled_target(source.get("distilled_to"))
-        title = source.get("title") or source.get("path") or "文档蒸馏"
-        specs[target] = frontmatter(
-            "distilled",
-            "init 文档蒸馏",
-            needs_review=True,
-        ) + f"""# {title}（从文档蒸馏）
-
-## 当前事实 / 待复核事实
-
-{format_list([str(item) for item in facts_list])}
-"""
-    return specs
+        target = safe_baseline_contract_target(source, facts)
+        entry = contracts.setdefault(target, {"titles": [], "distilled": [], "observed": []})
+        entry["titles"].append(str(source.get("title") or "文档蒸馏"))
+        entry["distilled"].extend(str(item) for item in facts_list)
+        entry["observed"].extend(str(item) for item in observed_list)
+    return {target: render_baseline_contract(target, data) for target, data in contracts.items()}
 
 
-def safe_distilled_target(value: Any) -> str:
-    default = "references/shared/brownfield-distilled.md"
+def safe_baseline_contract_target(source: dict[str, Any], facts: dict[str, Any]) -> str:
+    default_module = safe_contract_segment(
+        source.get("module")
+        or source.get("target_module")
+        or brownfield_facts(facts).get("default_module")
+        or "project"
+    )
+    default = f"{default_module}/_baseline/current.md"
+    value = source.get("baseline_contract") or source.get("contract_target") or source.get("distilled_to")
     raw = str(value or default).replace("\\", "/").lstrip("/")
+    if raw.startswith("contracts/"):
+        raw = raw.removeprefix("contracts/")
     target = PurePosixPath(raw)
     if not target.parts or any(part in ("", ".", "..") for part in target.parts):
         return default
-    if target.suffix != ".md":
+    if len(target.parts) != 3 or target.suffix != ".md":
         return default
-    top_level_allowed = {
-        "project-overview.md",
-        "project-structure.md",
-        "development-baseline.md",
-        "coding-baseline.md",
-        "testing-baseline.md",
-        "api.md",
-        "open-questions.md",
-    }
-    text = target.as_posix()
-    if text in top_level_allowed:
-        return text
-    if text.startswith("references/shared/") or text.startswith("references/modules/"):
-        return text
-    return default
+    module, feature, filename = target.parts
+    if not all(safe_contract_segment(part) == part for part in (module, feature, filename.removesuffix(".md"))):
+        return default
+    return target.as_posix()
+
+
+def safe_contract_segment(value: Any) -> str:
+    text = str(value or "").strip().replace("\\", "/").strip("/")
+    if "/" in text:
+        text = text.split("/")[-1]
+    cleaned = "".join(char if char.isalnum() or char in ("-", "_") else "-" for char in text.lower())
+    cleaned = "-".join(part for part in cleaned.split("-") if part)
+    return cleaned or "project"
+
+
+def render_baseline_contract(target: str, data: dict[str, list[str]]) -> str:
+    module, feature, _filename = PurePosixPath(target).parts
+    titles = sorted(set(data.get("titles") or []))
+    distilled = sorted(set(data.get("distilled") or []))
+    observed = sorted(set(data.get("observed") or []))
+    observed_section = format_list(observed) if observed else "- 暂无代码观察事实；后续可由代码反推补充。"
+    return f"""---
+type: baseline
+status: draft
+module: {module}
+feature: {feature}
+confidence: distilled
+source: init full-migration
+verified_at: {today()}
+needs_review: true
+---
+
+# Baseline Contract：{module}/{feature}
+
+## 定位
+
+本文件记录成熟项目接入 Ruyi 时，从历史文档蒸馏和现有代码观察得到的当前业务事实。
+
+它不是一次新需求，不直接进入 plan / implement / test；后续相关变更应先读取本 baseline，再创建本次变更 contract。
+
+## 来源摘要
+
+{format_list(titles) if titles else "- init full-migration"}
+
+## 当前业务事实
+
+{format_list(distilled) if distilled else "- 暂无。"}
+
+## 代码观察
+
+{observed_section}
+
+## 已知不确定项
+
+- 本文件为 `draft` 且 `needs_review: true` 时，引用前必须请用户确认。
+
+## 维护规则
+
+- 后续变更如果改变当前业务事实，应在交付后更新本 baseline 或生成 baseline patch。
+- 稳定的开发约束进入 `.ruyi/spec/`；模块业务事实保留在 baseline contract。
+"""
 
 
 def unknown_answer_count(facts: dict[str, Any]) -> int:
@@ -435,6 +484,7 @@ def brownfield_result(facts: dict[str, Any]) -> dict[str, Any]:
         "mode": "full-migration",
         "registered_docs": [str(item.get("path") or item.get("url") or item.get("title")) for item in useful_sources(facts)],
         "distilled_docs": [str(item.get("path") or item.get("title")) for item in partial_sources(facts) if item.get("distilled_facts")],
+        "baseline_contracts": sorted(baseline_contracts(facts).keys()),
         "interview_answer_count": sum(len(value) if isinstance(value, dict) else 1 for value in (brownfield_facts(facts).get("interview_answers") or {}).values()),
         "open_topics": brownfield_facts(facts).get("open_topics") or [],
         "fallback": fallback_required(facts),
@@ -577,8 +627,8 @@ def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any
     for filename, content in spec_contents(facts).items():
         create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
 
-    for filename, content in distilled_specs(facts).items():
-        create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
+    for filename, content in baseline_contracts(facts).items():
+        create_file(project, f".ruyi/contracts/{filename}", content, created, skipped)
 
     if fallback_required(facts):
         for filename, content in fallback_specs().items():

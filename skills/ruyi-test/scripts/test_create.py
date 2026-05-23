@@ -130,9 +130,15 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
 def render_test_result(payload: dict[str, Any]) -> str:
     contract = f".ruyi/contracts/{payload['module']}/{payload['feature']}/{payload['date']}.md"
     plan = f".ruyi/plans/{payload['module']}/{payload['feature']}/{payload['date']}.md"
-    risks = as_list(payload.get("risks")) or ["暂无。"]
-    failures = as_list(payload.get("failures")) or ["暂无。"]
-    ui_automation = as_list(payload.get("ui_automation")) or ["未执行 UI 自动化；原因待说明。"]
+    methods = bullet_list([f"验证方式：{item}" for item in as_list(payload["methods"])])
+    ui_automation = bullet_list([f"UI 自动化：{item}" for item in as_list(payload.get("ui_automation"))])
+    evidence = bullet_list([f"证据：{item}" for item in as_list(payload["evidence"])])
+    acceptance = bullet_list([f"验收：{item}" for item in as_list(payload["acceptance_results"])])
+    detail_lines = "\n".join(item for item in (acceptance, methods, ui_automation, evidence) if item)
+    failures = as_list(payload.get("failures"))
+    risks = as_list(payload.get("risks"))
+    failure_section = f"\n## 失败项\n\n{bullet_list(failures)}\n" if failures else ""
+    risk_section = f"\n## 风险与未覆盖项\n\n{bullet_list(risks)}\n" if risks else ""
 
     return f"""---
 contract: {contract}
@@ -145,34 +151,12 @@ result: {payload["result"]}
 
 # Test：{payload["title"]}
 
-## 验证对象
+## 验收与证据
 
 {payload.get("target") or f"对应 contract：`{contract}`。"}
 
-## 验证方式
-
-{bullet_list(as_list(payload["methods"]))}
-
-## UI 自动化验证
-
-{bullet_list(ui_automation)}
-
-## 验证证据
-
-{bullet_list(as_list(payload["evidence"]))}
-
-## 与验收标准对照
-
-{bullet_list(as_list(payload["acceptance_results"]))}
-
-## 失败项
-
-{bullet_list(failures)}
-
-## 风险与未覆盖项
-
-{bullet_list(risks)}
-
+{detail_lines}
+{failure_section}{risk_section}
 ## 结论
 
 {payload["conclusion"]}

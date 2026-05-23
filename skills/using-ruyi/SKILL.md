@@ -17,7 +17,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 4. 在完成上述判断前，不得执行任何代码编辑、文件写入或项目内 shell 命令。
 5. 上下文预算：路由确定前，最多读取 `.ruyi/INDEX.md` 与 1 个目标 module 的目录列表。
    - 不允许读取多个 feature 的 contract / plan / explain 正文。
-   - 只有路由确定到具体 feature 后，才读取该 feature 的最新 contract。
+   - 只有路由确定到具体 feature 后，才读取该 feature 的最新 contract；成熟项目如果存在同 module 的 baseline contract，可同时读取该 baseline 作为业务背景。
    - 跨 feature 引用必须由用户明确指定，不靠扫描自动发现。
 
 如果你跳过这一步直接编辑代码、运行命令或生成阶段产物，你违反了 Ruyi 主流程。停止当前动作，重新进入 Ritual。
@@ -104,6 +104,7 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 - 只读取与当前 `module / feature` 匹配的目录；不允许读取兄弟 feature 的产物正文。
 - 用户未指明 `module / feature` 且 INDEX 无法唯一定位时，向用户询问，不靠扫描全部 contract 推断。
 - 判断“是否缺少 contract”时，只检查目标路径下的文件是否存在，不读取文件正文。
+- baseline contract 只提供成熟项目当前业务事实背景，不能替代本次变更 contract。
 - 判断“是否已有审批通过”时，只读取目标 feature 最新 explain 的 frontmatter 或摘要信息；不得改写已审批事实。
 
 变更意图优先判断：

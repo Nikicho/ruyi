@@ -155,8 +155,17 @@ def render_explain(payload: dict[str, Any]) -> str:
     contract = f".ruyi/contracts/{payload['module']}/{payload['feature']}/{payload['date']}.md"
     plan = f".ruyi/plans/{payload['module']}/{payload['feature']}/{payload['date']}.md"
     test = f".ruyi/tests/{payload['module']}/{payload['feature']}/{payload['date']}.md"
-    risks = as_list(payload.get("risks")) or ["暂无。"]
-    technical_notes = as_list(payload.get("technical_notes")) or ["暂无。"]
+    summary = bullet_list([f"完成：{item}" for item in as_list(payload["completed"])])
+    requirements = bullet_list([f"需求对照：{item}" for item in as_list(payload["requirement_results"])])
+    quality = bullet_list([f"代码质量：{item}" for item in as_list(payload["code_quality"])])
+    quality_sources = bullet_list([f"质量依据：{item}" for item in as_list(payload["code_quality_sources"])])
+    delivery_summary = "\n".join((summary, requirements, quality, quality_sources))
+    verification = bullet_list(as_list(payload["verification"]))
+    followups = [
+        *[f"风险：{item}" for item in as_list(payload.get("risks"))],
+        *[f"备注：{item}" for item in as_list(payload.get("technical_notes"))],
+    ]
+    followup_section = f"\n## 风险与后续\n\n{bullet_list(followups)}\n" if followups else ""
 
     return f"""---
 approval: pending
@@ -167,33 +176,15 @@ test: {test}
 
 # Explain：{payload["title"]}
 
-## 本次完成内容
+## 交付摘要
 
-{bullet_list(as_list(payload["completed"]))}
+{delivery_summary}
 
-## 与需求对照
+## 验证结论
 
-{bullet_list(as_list(payload["requirement_results"]))}
-
-## 验证结果
-
-{bullet_list(as_list(payload["verification"]))}
-
-## 代码质量简报
-
-{bullet_list(as_list(payload["code_quality"]))}
-
-## 代码质量来源
-
-{bullet_list(as_list(payload["code_quality_sources"]))}
-
-## 风险与遗留问题
-
-{bullet_list(risks)}
-
-## 技术备注
-
-{bullet_list(technical_notes)}
+- 证据文件：`{test}`
+{verification}
+{followup_section}
 """
 
 

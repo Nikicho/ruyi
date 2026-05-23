@@ -22,9 +22,9 @@ description: Use when an existing frontend project needs to be initialized for R
 ## 3. 执行原则
 
 - 白名单读取项目事实。
-- 成熟项目接入不倒灌历史 contract。
+- 成熟项目接入不批量倒灌历史交付 contract，但完整迁移可以生成模块级 baseline contract。
 - 用户选择“快速开始”时，不生成 `docs-registry.md`、`interview-bank.md`、`init-evaluation-notes.md`。
-- 用户选择“完整迁移”时，蒸馏现有文档并澄清关键问题。
+- 用户选择“完整迁移”时，蒸馏现有文档并澄清关键问题；模块业务事实写入 baseline contract，不写入正式 spec。
 - 所有 spec 内容必须带 confidence。
 - 保守写入。
 - `spec` 采用空白占位加部分自动内容。
@@ -42,8 +42,8 @@ description: Use when an existing frontend project needs to be initialized for R
    - 完整迁移：蒸馏现有文档并澄清关键问题，建立项目知识基线。
 4. 读取项目事实；完整迁移时同时读取候选文档源和 brownfield 必问问卷。
 5. 生成 `.ruyirc`。
-6. 生成 `.ruyi/spec/` 基础锚点、拆分后的 baseline、`api.md` 和 `references/shared|modules` 索引。
-7. 完整迁移时生成 `docs-registry.md`、`interview-bank.md`、`workspace/init-evaluation-notes.md`。
+6. 生成 `.ruyi/spec/` 基础锚点、拆分后的 baseline、`api.md` 和 `references/shared|modules` 索引；spec 只放长期规则、索引和跨模块约束。
+7. 完整迁移时生成 `docs-registry.md`、`interview-bank.md`、`workspace/init-evaluation-notes.md`，并把蒸馏/代码反推的模块业务事实写入 `.ruyi/contracts/<module>/_baseline/current.md` 或 `.ruyi/contracts/<module>/<feature>/baseline.md`。
 8. 创建 `contracts / plans / tasks / tests / explain / spec-candidates / spec-archive / spec-patches / workspace` 目录。
 9. 生成 `.ruyi/project-actions.md`。
 10. 生成 `.ruyi/INDEX.md` 新格式占位。
@@ -66,7 +66,7 @@ description: Use when an existing frontend project needs to be initialized for R
 ```
 
 - 保留入口：写入 `docs-registry.md`。
-- 蒸馏关键事实：抽取 10-20 条，写入对应 spec。
+- 蒸馏关键事实：抽取 10-20 条，按模块写入 baseline contract。
 - 不录入：只写入 `workspace/init-evaluation-notes.md`。
 
 ### 5.2 外部文档读取
@@ -87,10 +87,17 @@ description: Use when an existing frontend project needs to be initialized for R
 从 <path> 蒸馏：
 - <fact>
 - <fact>
-确认写入 <target-spec>？
+确认写入 <target-baseline-contract>？
 ```
 
 未确认的蒸馏内容只能标 `confidence: distilled` 和 `needs_review: true`。
+
+蒸馏时应参考现有代码进行交叉校验：
+
+- 文档声称且代码能观察到的事实，写入 baseline contract 的 `## 当前业务事实` 和 `## 代码观察`。
+- 文档声称但代码无法确认的事实，仍可写入 baseline contract，但必须保持 `status: draft`、`needs_review: true`。
+- 代码观察到但文档没有覆盖的稳定业务事实，也可以写入对应 baseline contract，来源标为代码观察。
+- 不确定内容写入 baseline contract 的 `## 已知不确定项`，不写入正式 spec。
 
 ### 5.4 关键问题澄清
 
@@ -119,7 +126,7 @@ description: Use when an existing frontend project needs to be initialized for R
 将生成：
 - docs-registry.md：<n> 个入口
 - interview-bank.md：<n> 条确认答案
-- <target-spec>：<n> 条蒸馏事实
+- <target-baseline-contract>：<n> 条蒸馏事实
 - init-evaluation-notes.md：<n> 条评估记录
 确认写入？
 ```
@@ -206,7 +213,7 @@ description: Use when an existing frontend project needs to be initialized for R
 
 - 覆盖已有文件。
 - 自动补齐不完整初始化。
-- 批量生成历史 contract / plan / explain。
+- 批量生成历史交付 contract / plan / explain；完整迁移只允许生成当前业务事实 baseline contract。
 - 把陈旧或低质量文档入口录入 docs-registry。
 - 把 distilled / claimed 内容当成 observed 事实。
 - 读取页面文件正文来推断业务。

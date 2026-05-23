@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.3 - 2026-05-23
+
+### 成熟项目业务基线
+
+- 完整迁移不再把历史文档蒸馏出的模块业务事实写入正式 `spec`，改为生成 baseline contract。
+- baseline contract 写入 `.ruyi/contracts/<module>/_baseline/current.md` 或 `.ruyi/contracts/<module>/<feature>/baseline.md`，用于记录当前业务事实，不直接进入交付主流程。
+- 支持结合文档蒸馏与代码观察建立 baseline；待确认内容保留为 `draft`，避免把不确定事实当成正式规则。
+- `spec` 的边界收敛为长期规则、跨模块约束、项目结构事实和索引；`using-ruyi` 仅在路由到相关模块后把 baseline 作为背景读取。
+
+### Test 与 Explain 精简
+
+- `ruyi-test` 调整为最小验证账本：默认聚合记录验收项、验证方式和证据，只在失败或存在风险时展开附加章节。
+- `ruyi-explain` 调整为面向 PM 的交付说明：默认只保留交付摘要与验证结论，风险和必要备注按需出现。
+- `test` 与 `explain` 的 schema、脚本及各发布 skill 的内置 references 同步更新，避免自动生成空章节或技术流水账。
+
 ## 1.0.2 - 2026-05-20
 
 ### Init 接入门禁修复

@@ -23,7 +23,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 面向 PM 阅读。
 - 对照 contract，而不是对照代码 diff。
 - 代码质量简报来自 plan、implement 自检和实际代码事实。
-- 允许少量高价值技术备注。
+- 允许少量高价值技术备注，但并入风险与后续，不另写技术报告。
 - 不写成技术流水账。
 
 ## 4. 执行步骤
@@ -35,7 +35,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 5. 读取 implement 阶段自检和代码质量结论。
 6. 读取 `references/explain-discipline.md`。
 7. 对照验收标准整理交付结果。
-8. 写出影响范围、验证摘要、代码质量简报、风险和未覆盖项。
+8. 写出交付摘要、验证结论，以及必要的风险与后续。
 9. 按 `references/explain-schema.md` 生成 explain。
 10. 不写审批结论，等待 `ruyi-approve`。
 
@@ -48,6 +48,8 @@ explain/<module>/<feature>/<contract-date>.md
 ```
 
 正文结构遵守 `references/explain-schema.md`。
+
+正文面向 PM 阅读，默认只使用 `交付摘要` 和 `验证结论` 两节；存在风险或必要备注时再追加 `风险与后续`。
 
 ## 6. 脚本调用
 
@@ -66,7 +68,7 @@ python <skills-dir>/ruyi-explain/scripts/explain_create.py --project <project> -
 - 按固定路径写入 `.ruyi/explain/<module>/<feature>/<contract-date>.md`。
 - 不覆盖已有 explain。
 - 固定写入 `approval: pending`。
-- 写入代码质量简报。
+- 在交付摘要中写入有来源的代码质量结论。
 
 脚本不负责从代码 diff 自动总结，不写审批结论。
 

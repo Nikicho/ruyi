@@ -6,7 +6,11 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 
 它不是项目重构、不是业务分析、不是 team 规范加载，也不是一次性把所有缺失内容自动补齐。
 
-成熟项目接入时，init 的目标是建立未来工作所需的最小知识基线，不把历史功能倒灌成 contract。
+成熟项目接入时，init 的目标是建立未来工作所需的最小知识基线，不把历史功能倒灌成一批交付 contract。
+
+完整迁移可以生成 baseline contract，用来记录当前模块业务事实。baseline contract 不是一次新需求，不直接进入 plan / implement / test。
+
+baseline contract 的事实来源可以是历史文档蒸馏，也可以是现有代码观察。文档与代码冲突时，不要武断选择一方；把冲突写入 `## 已知不确定项`，等待用户确认。
 
 本纪律内化自 Superpowers 的 `brainstorming` 和 `writing-skills`：
 
@@ -29,7 +33,7 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 - 快速开始不生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
 - 完整迁移必须生成 `docs-registry.md`、`interview-bank.md` 和 `workspace/init-evaluation-notes.md`。
 - 用户未明确选择快速开始或完整迁移前，不允许写入 `.ruyi/`，也不允许用默认值代替用户选择。
-- 不批量生成历史 contract、plan、test、explain。
+- 不批量生成历史交付 contract、plan、test、explain；只允许按模块生成当前业务事实 baseline contract。
 
 ## 3. 项目事实读取
 
@@ -74,7 +78,7 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 | 质量 | 处理 |
 | --- | --- |
 | 有用 | 录入 `.ruyi/spec/docs-registry.md` |
-| 部分有用 | 蒸馏关键事实进 spec，源本身不录入 registry |
+| 部分有用 | 蒸馏关键事实进 baseline contract，源本身不录入 registry |
 | 陈旧 / 已废 / 误导 | 不录入，只写入 `workspace/init-evaluation-notes.md` |
 
 ## 5. Confidence 规则
@@ -98,7 +102,7 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 | 猜测业务模块规则 | 只记录可观察项目事实和待确认问题 |
 | 初始化时把 Swagger / API 列表复制进 spec | 只创建 `spec/api.md`，由用户后续补权威源链接 |
 | 用 hook 执行业务路由 | hook 只检测 `.ruyi/` 或 `.ruyirc` 并输出 reminder |
-| 把历史功能倒灌成 contract | 历史留在代码、git、外部文档；Ruyi 从下一次变更开始生成 contract |
+| 把历史功能倒灌成一批交付 contract | 只生成当前业务事实 baseline contract；Ruyi 从下一次变更开始生成正式变更 contract |
 | 把所有外部文档都录入 docs-registry | 只录入已确认有用入口，陈旧文档写入评估笔记 |
 | 蒸馏时翻译全文 | 只抽关键事实，并写 confidence/source/verified_at |
 | 用户答不上来仍强行写规范 | 触发 fallback，写 open 占位 |
@@ -113,6 +117,6 @@ init 阶段负责把一个已有前端项目接入 Ruyi，并生成固定 `.ruyi
 - 本次写入是否会覆盖已有文件？
 - 项目事实是否来自白名单文件？
 - spec 占位内容是否只记录事实和待确认问题？
-- 是否避免生成历史 contract？
+- 是否避免生成历史交付 contract，并只生成必要 baseline contract？
 - docs-registry 是否只包含有用入口？
 - 所有 spec 是否带 confidence？

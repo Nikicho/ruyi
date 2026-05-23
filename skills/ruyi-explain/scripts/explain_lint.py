@@ -60,7 +60,12 @@ def lint_explain(project_path: str | Path, payload: dict[str, Any]) -> dict[str,
 
     explain_text = explain.read_text(encoding="utf-8")
     test_text = test.read_text(encoding="utf-8")
-    risks = section_lines(explain_text, "风险与遗留问题")
+    followups = section_lines(explain_text, "风险与后续") or section_lines(explain_text, "风险与遗留问题")
+    risks = [
+        item.removeprefix("风险：").strip()
+        for item in followups
+        if not item.startswith("备注：")
+    ]
     violations = [
         item
         for item in risks

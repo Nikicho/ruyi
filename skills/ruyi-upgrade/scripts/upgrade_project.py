@@ -18,15 +18,16 @@ OBSOLETE_DIRS = (
     ".ruyi/spec-archive",
     ".ruyi/spec-patches",
 )
-OBSOLETE_IGNORE_RULES = (
-    ".ruyi/workspace/**",
+REMOVED_IGNORE_RULES = (
     "!.ruyi/workspace/README.md",
-    ".ruyi/spec-archive/**",
-    ".ruyi/spec-patches/**",
 )
 LOCAL_IGNORE_RULES = (
     ".ruyi/tasks/**",
     ".ruyi/spec-candidates/**",
+    ".ruyi/explain/**",
+    ".ruyi/workspace/**",
+    ".ruyi/spec-archive/**",
+    ".ruyi/spec-patches/**",
 )
 SPEC_DIRS = (
     ".ruyi/spec",
@@ -136,7 +137,7 @@ def migrate_gitignore(project: Path, result: dict[str, Any]) -> None:
     target = project / ".gitignore"
     existing = target.read_text(encoding="utf-8") if target.exists() else ""
     lines = existing.splitlines()
-    kept = [line for line in lines if line not in OBSOLETE_IGNORE_RULES]
+    kept = [line for line in lines if line not in REMOVED_IGNORE_RULES]
     for rule in LOCAL_IGNORE_RULES:
         if rule not in kept:
             kept.append(rule)

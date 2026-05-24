@@ -17,6 +17,7 @@
 - 旧 `frontend-baseline.md` 拆分为 `development-baseline.md` 和 `coding-baseline.md` 后删除。
 - 旧 `spec/references/shared/INDEX.md` 与 `spec/references/modules/INDEX.md` 合并到 `.ruyi/spec/INDEX.md` 后删除。
 - 废弃目录 `explain / workspace / spec-archive / spec-patches` 需要用户确认后删除；删除完成后才标记 `schema_version: 3`。
+- init 和 upgrade 会把 `tasks / spec-candidates / explain / workspace / spec-archive / spec-patches` 写入 `.gitignore`，避免废弃或本地目录误提交。
 
 ### Spec 与知识沉淀
 

@@ -48,6 +48,10 @@ REQUIRED_RUYI_FILES = (
 LOCAL_GITIGNORE_RULES = (
     ".ruyi/tasks/**",
     ".ruyi/spec-candidates/**",
+    ".ruyi/explain/**",
+    ".ruyi/workspace/**",
+    ".ruyi/spec-archive/**",
+    ".ruyi/spec-patches/**",
 )
 
 

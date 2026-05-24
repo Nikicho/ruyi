@@ -9,6 +9,17 @@ Ruyi 是一个面向前端项目的 AI 协作开发框架，以 code agent skill
 
 它不是 CLI 产品。用户不需要记命令；日常使用时由 agent 通过 `using-ruyi` 判断当前项目状态、识别用户意图，并路由到对应阶段。
 
+## 1.0.3 当前协议
+
+Ruyi 1.0.3 使用 schema v3：
+
+- 新项目初始化为 `schema_version: 3`。
+- 正式主流程是 `contract -> plan -> implement -> test -> approve`。
+- `test` 同时承载验证摘要、证据、风险和审批状态。
+- `ruyi-explain` 已退出正式主流程，仅作为旧项目兼容提示入口保留。
+- `.ruyi/spec/INDEX.md` 是唯一正式 spec 检索入口。
+- `.ruyi/tasks/`、`.ruyi/spec-candidates/`、`.ruyi/explain/`、`.ruyi/workspace/`、`.ruyi/spec-archive/`、`.ruyi/spec-patches/` 都会写入 `.gitignore`，避免本地或废弃目录误提交。
+
 ## 核心目标
 
 - 让前端需求从“口头描述”进入可追踪的 contract。
@@ -152,7 +163,6 @@ CLAUDE.md
 - “新增订单关键词搜索。”
 - “继续。”
 - “这个交付通过。”
-- “这个交付通过。”
 - “把这次经验沉淀一下。”
 
 agent 应先加载 `using-ruyi`，再根据项目状态和用户意图路由到具体阶段。
@@ -165,7 +175,20 @@ Ruyi 初始化后会部署三层入口保护：
 
 如果发现 agent 没有走 Ruyi 流程，可以输入 `/ruyi` 强制激活。
 
-成熟项目接入时，Ruyi 不倒灌历史 contract。`ruyi-init` 提供两种方式：快速开始只启用流程，历史知识后续按需补；完整迁移会蒸馏现有文档并澄清关键问题，生成项目知识基线。
+## 成熟项目接入
+
+成熟项目接入不要求补齐历史 contract。Ruyi 从接入后的下一次变更开始形成正式 contract。
+
+接入方式只有两种：
+
+- 快速开始：创建最小 `.ruyi/` 结构、入口保护和基础 spec，占位知识后续按需补。
+- 完整迁移：蒸馏 agent 可读取的历史文档和当前代码观察，生成项目知识基线；当前业务事实进入 baseline contract，长期规则进入 `.ruyi/spec/`。
+
+完整迁移读取外部文档时：
+
+- 有 `agent-browser`、`fast-browser`、`bb-browser` 等浏览器工具时，可以用浏览器工具查看外部文档后蒸馏。
+- 没有浏览器工具时，用户应提供 Markdown 或纯文本等 agent 易读文件。
+- 本地导出文件只作为蒸馏输入，不写入可提交 spec，也不保存不可复用的本地路径。
 
 ## 安装
 
@@ -186,6 +209,20 @@ cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\skill
 ```
 
 其他阶段 skill 按同样方式链接。安装后重启 code agent。
+
+## 升级到 schema v3
+
+已接入 Ruyi 的项目升级到 1.0.3 后，应先让 agent 通过 `using-ruyi` 进入 `ruyi-upgrade`。
+
+`ruyi-upgrade` 会处理：
+
+- 无版本、v1、v2 项目升级到 schema v3。
+- 旧 `.ruyi/explain/` 的审批状态迁移到对应 test。
+- 旧 `frontend-baseline.md` 拆分为 `development-baseline.md` 和 `coding-baseline.md` 后删除。
+- 旧 `spec/references/shared/INDEX.md` 与 `spec/references/modules/INDEX.md` 合并到 `.ruyi/spec/INDEX.md` 后删除。
+- `.gitignore` 补齐本地目录和废弃目录规则。
+
+废弃目录 `explain / workspace / spec-archive / spec-patches` 需要用户确认后删除。删除完成后，upgrade 才会把 `.ruyirc` 标记为 `schema_version: 3`。
 
 ## 入口路由
 

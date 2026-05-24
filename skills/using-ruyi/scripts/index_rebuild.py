@@ -13,7 +13,6 @@ SECTIONS = {
     "contracts": "contract",
     "plans": "plan",
     "tests": "test",
-    "explain": "explain",
 }
 
 
@@ -87,8 +86,18 @@ def contract_summary(path: Path) -> dict[str, str]:
         "goal": goal or "待补充",
         "type": frontmatter.get("type", "待补充"),
         "size": frontmatter.get("size", ""),
-        "status": frontmatter.get("status", "待补充"),
+        "requirement_status": frontmatter.get("status", "待补充"),
         "superseded_by": frontmatter.get("superseded_by", ""),
+    }
+
+
+def test_summary(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    frontmatter = parse_frontmatter(path.read_text(encoding="utf-8"))
+    return {
+        "verification_status": frontmatter.get("result", ""),
+        "approval_status": frontmatter.get("approval", ""),
     }
 
 
@@ -115,8 +124,9 @@ def merge_feature_meta(current: dict[str, str], candidate: dict[str, str]) -> di
         current["type"] = candidate["type"]
     if candidate.get("size") and not current.get("size"):
         current["size"] = candidate["size"]
-    if status_rank(candidate.get("status", "")) >= status_rank(current.get("status", "")):
-        current["status"] = candidate.get("status", current.get("status", "待补充"))
+    for key in ("requirement_status", "verification_status", "approval_status"):
+        if candidate.get(key) and status_rank(candidate.get(key, "")) >= status_rank(current.get(key, "")):
+            current[key] = candidate[key]
     for key in ("superseded_by",):
         if candidate.get(key):
             current[key] = candidate[key]
@@ -150,14 +160,11 @@ def rebuild_index(project_path: str | Path) -> dict:
                 grouped[module][feature]["meta"] = merge_feature_meta(grouped[module][feature]["meta"], meta)
                 if meta.get("goal") == "待补充":
                     warnings.append(f"{module}/{feature}/{date} 缺少可抽取的业务目标")
-            if section == "explain":
-                frontmatter = parse_frontmatter(path.read_text(encoding="utf-8"))
-                approval = frontmatter.get("approval")
-                if approval:
-                    grouped[module][feature]["meta"] = merge_feature_meta(
-                        grouped[module][feature]["meta"],
-                        {"status": approval},
-                    )
+            if section == "tests":
+                grouped[module][feature]["meta"] = merge_feature_meta(
+                    grouped[module][feature]["meta"],
+                    test_summary(path),
+                )
 
     lines = ["# Ruyi Index", "", "> 自动生成，请勿手工编辑。", ""]
     for module in sorted(grouped):
@@ -170,7 +177,9 @@ def rebuild_index(project_path: str | Path) -> dict:
                 type_text = f"{type_text}, size: {meta['size']}"
             lines.append(f"- 业务目标：{meta.get('goal') or '待补充'}")
             lines.append(f"- 类型：{type_text}")
-            lines.append(f"- 状态：{meta.get('status') or '待补充'}")
+            lines.append(f"- 需求状态：{meta.get('requirement_status') or '待补充'}")
+            lines.append(f"- 验证状态：{meta.get('verification_status') or '待补充'}")
+            lines.append(f"- 审批状态：{meta.get('approval_status') or '待补充'}")
             if meta.get("superseded_by"):
                 lines.append(f"- 已被取代：{meta['superseded_by']}")
             for date in sorted(grouped[module][feature]["artifacts"]):

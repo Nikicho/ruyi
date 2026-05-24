@@ -21,7 +21,6 @@ INTENTS = (
     "plan",
     "implement",
     "test",
-    "explain",
     "approve",
     "spec-discover",
     "spec-evolve",
@@ -33,9 +32,9 @@ SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 CONTRACT_READY_STATUSES = ("confirmed",)
 PLAN_STATUSES = ("confirmed",)
 TEST_PASSING_RESULTS = ("passed", "passed-with-notes")
-EXPLAIN_REQUIRED_LINKS = ("contract", "plan", "test")
+TEST_REQUIRED_LINKS = ("contract", "plan")
 TINY_SIZE = "tiny"
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 
 STAGE_SKILLS = {
     "init": "ruyi-init",
@@ -44,7 +43,6 @@ STAGE_SKILLS = {
     "plan": "ruyi-plan",
     "implement": "ruyi-implement",
     "test": "ruyi-test",
-    "explain": "ruyi-explain",
     "approve": "ruyi-approve",
     "spec-discover": "ruyi-spec-discover",
     "spec-evolve": "ruyi-spec-evolve",
@@ -67,7 +65,7 @@ def validate_stage_payload(payload: dict[str, Any]) -> None:
     intent = payload.get("intent")
     if intent == "continue" and not has_stage_identity(payload):
         return
-    if intent in ("plan", "implement", "test", "explain", "approve", "spec-evolve", "continue"):
+    if intent in ("plan", "implement", "test", "approve", "spec-evolve", "continue"):
         required = ("module", "feature", "date")
         missing = [key for key in required if not payload.get(key)]
         if missing:
@@ -108,10 +106,6 @@ def test_path(project: Path, payload: dict[str, Any]) -> Path:
     return project / ".ruyi" / "tests" / payload["module"] / payload["feature"] / f"{payload['date']}.md"
 
 
-def explain_path(project: Path, payload: dict[str, Any]) -> Path:
-    return project / ".ruyi" / "explain" / payload["module"] / payload["feature"] / f"{payload['date']}.md"
-
-
 def has_in_progress_task(project: Path, payload: dict[str, Any]) -> bool:
     directory = task_dir(project, payload)
     if not directory.is_dir():
@@ -123,9 +117,10 @@ def has_in_progress_task(project: Path, payload: dict[str, Any]) -> bool:
     return False
 
 
-def explain_has_required_links(project: Path, payload: dict[str, Any]) -> bool:
-    frontmatter = parse_frontmatter(explain_path(project, payload))
-    return all(frontmatter.get(key) for key in EXPLAIN_REQUIRED_LINKS)
+def test_has_required_links(project: Path, payload: dict[str, Any], *, tiny: bool = False) -> bool:
+    frontmatter = parse_frontmatter(test_path(project, payload))
+    required = ("contract",) if tiny else TEST_REQUIRED_LINKS
+    return all(frontmatter.get(key) for key in required)
 
 
 def contract_size(project: Path, payload: dict[str, Any]) -> str:
@@ -196,13 +191,8 @@ def artifact_candidate_from_path(project: Path, path: Path) -> dict[str, str] | 
         return None
 
     section = relative[1]
-    if section in ("contracts", "plans", "tests", "explain", "spec-candidates") and len(relative) == 5:
+    if section in ("contracts", "plans", "tests") and len(relative) == 5:
         date = Path(relative[4]).stem
-        if DATE_PATTERN.match(date):
-            return {"module": relative[2], "feature": relative[3], "date": date}
-
-    if section == "tasks" and len(relative) == 6:
-        date = relative[4]
         if DATE_PATTERN.match(date):
             return {"module": relative[2], "feature": relative[3], "date": date}
 
@@ -219,7 +209,7 @@ def active_candidates(project: Path) -> list[dict[str, str]]:
     # INDEX 缺失时只使用目录名兜底，不读取产物正文。
     roots = [
         project / ".ruyi" / "contracts",
-        project / ".ruyi" / "explain",
+        project / ".ruyi" / "tests",
     ]
     files: list[Path] = []
     for root in roots:
@@ -348,23 +338,26 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
         if intent == "test":
             return route("test", [], "tiny contract 已确认，可以进入轻量验证。")
         test = test_path(project, payload)
-        if intent in ("explain", "approve", "spec-evolve"):
+        if intent in ("approve", "spec-evolve"):
             if not test.is_file():
                 return route("test", ["test-not-found"], "tiny contract 缺少 test，不能收口。")
             test_result = parse_frontmatter(test).get("result")
             if test_result not in TEST_PASSING_RESULTS:
                 return route("test", ["test-not-passed"], "tiny contract 的 test 未通过，不能收口。")
-            return route("complete", ["tiny-complete"], "tiny contract 已完成，默认不强制 explain/approve/spec-candidate。")
+            approval = parse_frontmatter(test).get("approval")
+            if intent == "approve" and approval != "approved":
+                return route("approve", ["approval-pending"], "tiny contract 已验证，可以审批 test。")
+            return route("complete", ["tiny-complete"], "tiny contract 已完成，默认不强制 approve/spec-candidate。")
 
     plan = plan_path(project, payload)
-    if intent in ("implement", "test", "explain", "approve", "spec-evolve") and not plan.is_file():
+    if intent in ("implement", "test", "approve", "spec-evolve") and not plan.is_file():
         return route("plan", ["plan-not-found"], "缺少 plan，不能进入正式实现。")
 
-    if intent in ("implement", "test", "explain", "approve", "spec-evolve") and not plan_has_contract_anchor(plan):
+    if intent in ("implement", "test", "approve", "spec-evolve") and not plan_has_contract_anchor(plan):
         return route("plan", ["plan-missing-contract-anchor"], "plan 缺少 contract 锚点，不能进入正式实现。")
 
     plan_status = parse_frontmatter(plan).get("status")
-    if intent in ("implement", "test", "explain", "approve", "spec-evolve") and plan_status not in PLAN_STATUSES:
+    if intent in ("implement", "test", "approve", "spec-evolve") and plan_status not in PLAN_STATUSES:
         return route("plan", ["plan-not-confirmed"], "plan 未确认，不能进入正式实现。")
 
     if intent == "implement":
@@ -374,30 +367,27 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
         return route("test", [], "contract 和 plan 已确认，可以进入测试验证阶段。")
 
     test = test_path(project, payload)
-    if intent == "explain" and not test.is_file():
-        return route("test", ["test-not-found"], "缺少 test，不能生成 explain。")
+    if intent in ("approve", "spec-evolve") and not test.is_file():
+        return route("test", ["test-not-found"], "缺少 test，不能进入后续阶段。")
 
     test_result = parse_frontmatter(test).get("result")
-    if intent == "explain" and test_result not in TEST_PASSING_RESULTS:
-        return route("test", ["test-not-passed"], "test 未通过，不能生成 explain。")
+    if intent in ("approve", "spec-evolve") and test_result not in TEST_PASSING_RESULTS:
+        return route("test", ["test-not-passed"], "test 未通过，不能进入后续阶段。")
 
-    if intent == "explain":
-        return route("explain", [], "contract 和 test 已存在，可以生成 explain。")
-
-    if intent in ("approve", "spec-evolve") and not explain_path(project, payload).is_file():
-        return route("explain", ["explain-not-found"], "缺少 explain，不能进入后续阶段。")
-
-    if intent in ("approve", "spec-evolve") and not explain_has_required_links(project, payload):
-        return route("explain", ["explain-missing-links"], "explain 缺少 contract、plan 或 test 锚点，不能进入后续阶段。")
+    if intent in ("approve", "spec-evolve") and not test_has_required_links(project, payload):
+        return route("test", ["test-missing-links"], "test 缺少 contract 或 plan 锚点，不能进入后续阶段。")
 
     if intent == "approve":
-        return route("approve", [], "explain 已存在，可以进入审批阶段。")
+        approval = parse_frontmatter(test).get("approval")
+        if approval == "approved":
+            return route("complete", [], "test 已审批通过。")
+        return route("approve", [], "test 已存在，可以进入审批阶段。")
 
     if intent == "spec-evolve":
-        approval = parse_frontmatter(explain_path(project, payload)).get("approval")
+        approval = parse_frontmatter(test).get("approval")
         if approval != "approved":
-            return route("approve", ["approval-not-approved"], "explain 未审批通过，不能进入知识沉淀。")
-        return route("spec-evolve", [], "explain 已审批通过，可以判断是否直接更新正式 spec 或暂存本地 candidate。")
+            return route("approve", ["approval-not-approved"], "test 未审批通过，不能进入知识沉淀。")
+        return route("spec-evolve", [], "test 已审批通过，可以判断是否直接更新正式 spec 或暂存本地 candidate。")
 
     return route_continue(project, payload)
 
@@ -441,16 +431,15 @@ def route_continue(project: Path, payload: dict[str, Any]) -> dict[str, Any]:
     if test_result not in TEST_PASSING_RESULTS:
         return route("test", ["test-not-passed"], "下一步是修复或补充验证，直到 test 通过。")
 
-    explain = explain_path(project, payload)
-    if not explain.is_file():
-        return route("explain", ["explain-not-found"], "下一步是生成 explain。")
+    if not test_has_required_links(project, payload):
+        return route("test", ["test-missing-links"], "下一步是补齐 test 的 contract / plan 锚点。")
 
-    approval = parse_frontmatter(explain).get("approval")
-    return_stage = parse_frontmatter(explain).get("return_stage")
+    approval = parse_frontmatter(test).get("approval")
+    return_stage = parse_frontmatter(test).get("return_stage")
     if approval == "changes-requested" and return_stage in ("contract", "plan", "implement", "test"):
         return route(return_stage, ["approval-returned"], f"审批未通过，需返回 {return_stage} 阶段处理。")
     if approval != "approved":
-        return route("approve", ["approval-pending"], "下一步是审批 explain。")
+        return route("approve", ["approval-pending"], "下一步是审批 test。")
 
     return route("complete", [], "该 contract 的 Ruyi 主流程已完成；如有可复用规则，可按需进入 spec-evolve。")
 

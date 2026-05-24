@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import re
 from pathlib import Path
@@ -11,7 +10,6 @@ from typing import Any
 
 
 TARGET_LAYERS = ("project", "team")
-PENDING_STATUSES = ("pending", "candidate", "")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
@@ -82,14 +80,14 @@ def validate_payload(payload: dict[str, Any]) -> None:
 
 
 def is_initialized(project: Path) -> bool:
-    return (project / ".ruyirc").is_file() and (project / ".ruyi" / "spec-candidates").is_dir()
+    return (project / ".ruyirc").is_file() and (project / ".ruyi" / "spec").is_dir()
 
 
-def explain_path(project: Path, payload: dict[str, Any]) -> Path:
+def test_path(project: Path, payload: dict[str, Any]) -> Path:
     return (
         project
         / ".ruyi"
-        / "explain"
+        / "tests"
         / payload["module"]
         / payload["feature"]
         / f"{payload['date']}.md"
@@ -123,50 +121,17 @@ def parse_frontmatter(text: str) -> dict[str, str] | None:
     return data
 
 
-def parse_frontmatter_text(text: str) -> tuple[dict[str, str], str]:
-    if not text.startswith("---\n"):
-        return {}, text
-
-    end = text.find("\n---\n", 4)
-    if end == -1:
-        return {}, text
-
-    data: dict[str, str] = {}
-    for line in text[4:end].splitlines():
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        data[key.strip()] = value.strip()
-    return data, text[end + len("\n---\n") :]
-
-
-def render_frontmatter(data: dict[str, str]) -> str:
-    return "---\n" + "\n".join(f"{key}: {value}" for key, value in data.items()) + "\n---\n"
-
-
 def bullet_list(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
-def rebuild_index_if_available(project: Path) -> dict[str, Any] | None:
-    script = Path(__file__).resolve().parents[2] / "using-ruyi" / "scripts" / "index_rebuild.py"
-    if not script.is_file():
-        return None
-    spec = importlib.util.spec_from_file_location("ruyi_index_rebuild", script)
-    if spec is None or spec.loader is None:
-        return None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.rebuild_index(project)
-
-
 def render_candidate(payload: dict[str, Any]) -> str:
-    explain = f".ruyi/explain/{payload['module']}/{payload['feature']}/{payload['date']}.md"
+    test = f".ruyi/tests/{payload['module']}/{payload['feature']}/{payload['date']}.md"
     excluded = as_list(payload.get("excluded")) or ["暂无。"]
     open_questions = as_list(payload.get("open_questions")) or ["暂无。"]
 
     return f"""---
-source_explain: {explain}
+source_test: {test}
 module: {payload["module"]}
 feature: {payload["feature"]}
 date: {payload["date"]}
@@ -200,38 +165,6 @@ status: pending
 """
 
 
-def supersede_existing_candidates(project: Path, payload: dict[str, Any], new_target: Path) -> list[str]:
-    root = new_target.parent
-    if not root.is_dir():
-        return []
-
-    superseded: list[str] = []
-    candidates_root = project / ".ruyi" / "spec-candidates"
-    rel_new = new_target.relative_to(candidates_root).as_posix()
-    for candidate in sorted(root.glob("*.md")):
-        if candidate == new_target or candidate.name == "EXPECTED.md":
-            continue
-
-        frontmatter, body = parse_frontmatter_text(candidate.read_text(encoding="utf-8"))
-        if frontmatter.get("status", "pending") not in PENDING_STATUSES:
-            continue
-        if frontmatter.get("target_layer") != payload["target_layer"]:
-            continue
-        if frontmatter.get("target_spec") != payload["target_spec"]:
-            continue
-
-        frontmatter["status"] = "superseded"
-        frontmatter["superseded_by"] = rel_new
-        frontmatter["supersede_reason"] = "newer candidate created for same target spec"
-        archive = project / ".ruyi" / "spec-archive" / "superseded" / candidate.relative_to(candidates_root)
-        archive.parent.mkdir(parents=True, exist_ok=True)
-        archive.write_text(render_frontmatter(frontmatter) + "\n" + body.lstrip(), encoding="utf-8")
-        candidate.unlink()
-        superseded.append(str(archive))
-
-    return superseded
-
-
 def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[str, Any]:
     project = Path(project_path)
     validate_payload(payload)
@@ -244,34 +177,43 @@ def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[
             "path": None,
         }
 
-    explain = explain_path(project, payload)
-    if not explain.is_file():
+    test = test_path(project, payload)
+    if not test.is_file():
         return {
             "created": False,
-            "reason": "explain-not-found",
-            "message": "对应 explain 不存在，不能创建 spec candidate。",
+            "reason": "test-not-found",
+            "message": "对应 test 不存在，不能创建 spec candidate。",
             "path": None,
-            "explain": str(explain),
+            "test": str(test),
         }
 
-    frontmatter = parse_frontmatter(explain.read_text(encoding="utf-8"))
+    frontmatter = parse_frontmatter(test.read_text(encoding="utf-8"))
     approval = frontmatter.get("approval") if frontmatter else None
     missing_anchors = [
-        key for key in ("contract", "plan", "test") if not frontmatter or not frontmatter.get(key)
+        key for key in ("contract", "plan") if not frontmatter or not frontmatter.get(key)
     ]
     if missing_anchors:
         return {
             "created": False,
-            "reason": "explain-missing-anchors",
-            "message": "explain 缺少 contract、plan 或 test 锚点，不能创建 spec candidate。",
+            "reason": "test-missing-anchors",
+            "message": "test 缺少 contract 或 plan 锚点，不能创建 spec candidate。",
             "path": None,
             "missing": missing_anchors,
+        }
+    test_result = frontmatter.get("result")
+    if test_result not in ("passed", "passed-with-notes"):
+        return {
+            "created": False,
+            "reason": "test-not-passed",
+            "message": "test 未通过，不能创建 spec candidate。",
+            "path": None,
+            "result": test_result,
         }
     if approval != "approved":
         return {
             "created": False,
-            "reason": "approval-not-approved",
-            "message": "explain 未审批通过，不能创建 spec candidate。",
+            "reason": "test-not-approved",
+            "message": "test 未审批通过，不能创建 spec candidate。",
             "path": None,
             "approval": approval,
         }
@@ -287,15 +229,11 @@ def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_candidate(payload), encoding="utf-8")
-    superseded = supersede_existing_candidates(project, payload, target)
-    index_result = rebuild_index_if_available(project)
     return {
         "created": True,
         "reason": None,
         "message": "spec candidate 已创建。",
         "path": str(target),
-        "superseded": superseded,
-        "index": index_result,
     }
 
 

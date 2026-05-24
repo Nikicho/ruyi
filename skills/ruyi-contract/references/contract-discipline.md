@@ -23,7 +23,7 @@ contract 阶段负责把用户意图转成可实现、可验收、可追踪的�
 
 ## 3. 最小流程
 
-1. 读取项目 spec 和可用 team spec。
+1. 读取 `.ruyi/spec/INDEX.md`，再按索引读取项目 spec 和可用 team spec。
 2. 按 confidence 折扣规则处理 spec 内容。
 3. 判断需求类型：新功能、修复、重构、需求调整。
 4. 用一句话写清业务目标。
@@ -72,6 +72,13 @@ contract 不应该包含：
 - 与本次需求无关的历史背景
 - 完整 Swagger / OpenAPI / Apifox 字段拷贝
 - mock 数据正文
+
+当用户开始讨论组件拆分、状态管理、缓存、service 组织、mock、错误处理、目录调整或实现步骤时，先提醒这是 plan 阶段内容。
+
+contract 阶段只确认这些话题是否形成业务约束或验收要求：它是否影响用户行为、兼容范围、性能目标、安全边界或交付范围？
+
+- 如果影响，把影响写成业务规则、范围边界、接口范围或验收标准。
+- 如果不影响，不写入 contract，留到 plan 阶段讨论。
 
 ## 5. 反模式
 
@@ -148,21 +155,21 @@ contract 不应该包含：
 
 **为什么错**：历史不可追溯；如果新需求又被撤回，旧实现状态丢失。
 
-**正确做法**：旧 task 标 `superseded`，创建新 task。
+**正确做法**：重评 plan；若本地 checkpoint 不再有效，删除并按当前 plan 重建。
 
-### ❌ 审批后通过修订原 explain 绕过新审批
+### ❌ 审批后通过修订原 test 绕过重新验收
 
-**触发场景**：explain 已 approved，用户说“上线前加个埋点”，agent 把埋点写进原 explain。
+**触发场景**：test 已 approved，用户说“上线前加个埋点”，agent 把埋点写进原 test。
 
 **为什么错**：approval 是事实，被改写后下次复盘无法判断当时通过的到底是什么。
 
-**正确做法**：走类型 D，新 contract，新审批。
+**正确做法**：走类型 D，重开同一 contract，记录返工原因并重新验证、审批。
 
 ### ❌ 类型 C 不新建文件，硬改原 contract
 
 **触发场景**：用户改了核心业务规则，agent 在原 contract 里覆盖。
 
-**为什么错**：旧 contract 的语义彻底丢失，plan / test / explain 引用关系混乱。
+**为什么错**：旧 contract 的语义彻底丢失，plan / test 引用关系混乱。
 
 **正确做法**：新建日期 contract；旧 contract 加 `superseded_by`，plan / test 跟着新建。
 

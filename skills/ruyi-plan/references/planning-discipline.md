@@ -14,6 +14,8 @@ Ruyi 不依赖这些 skill 运行，但吸收其计划拆分、验证优先和�
 - 不把未确认需求写进 plan。
 - 不把 plan 写成代码实现流水账。
 - contract 存在 `## 接口范围` 时，plan 必须写 `## 接口对接`。
+- plan 若发现方案选择会改变用户行为、业务规则、接口范围或验收标准，必须返回 contract，不允许在 plan 中隐式扩展需求。
+- 读取项目规范时，先读 `.ruyi/spec/INDEX.md`，再按索引读取相关 spec。
 
 ## 3. 测试用例映射
 
@@ -47,12 +49,7 @@ plan 的 `## 接口对接` 只回答前端怎么接，不重新定义后端 API�
 
 ## 6. 重评模式
 
-类型 B 中途变更后，plan 不允许只追加新 task。必须先评估旧 task：
-
-- `done` 且被新需求取代：标 `superseded`。
-- `in-progress` 且与新需求冲突：暂停并转 `superseded` 或调整。
-- `pending` 且仍有效：保留。
-- 新增需求：创建新 task。
+类型 B 中途变更后，plan 不允许只追加新步骤。必须先评估现有步骤、顺序与写入边界；旧本地 checkpoint 与新 plan 不一致时删除并按当前 plan 重建。
 
 ## 7. 反模式
 
@@ -65,6 +62,7 @@ plan 的 `## 接口对接` 只回答前端怎么接，不重新定义后端 API�
 | 为了并行而强行拆任务 | 保持单 task，降低协调成本 |
 | contract 有接口范围但 plan 没有接口对接 | 补齐 service、类型、mock、错误处理、状态管理 |
 | 中途变更只新增 task 不评估旧 task | 先评估旧 task 状态，再新增或 supersede |
+| plan 中顺手扩大需求范围 | 返回 contract 重新确认业务边界 |
 
 ## 8. 进入 implement 的条件
 

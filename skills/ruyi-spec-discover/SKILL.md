@@ -54,7 +54,7 @@ description: Routed by using-ruyi. Use when an initialized Ruyi project needs to
 
 - 若用户只是要分析，输出候选建议，不落盘。
 - 若用户确认写入，写入本地 `.ruyi/spec-candidates/`。
-- 收口时说明候选仍需 `ruyi-spec-merge` 人工评审，正式 spec 不会自动变化。
+- 收口时说明候选仍需 `ruyi-spec-merge` 人工评审；用户确认采用时会直接更新正式 spec 并删除候选。
 
 ## 7. 必读参考
 

@@ -1,6 +1,6 @@
 ---
 name: using-ruyi
-description: Frontend project Ruyi pipeline router. Use whenever the user asks to add a feature, fix a bug, refactor, optimize code, implement, test, generate a dev brief, approve a delivery, distill knowledge, infer specs from code, amend an ongoing requirement, or continue ongoing work in a frontend project. Common Chinese triggers: "继续"、"新增"、"修复"、"重构"、"代码优化"、"代码微重构"、"代码反推spec"、"梳理组件规范"、"接入Ruyi"、"开发简报"、"通过"、"沉淀"、"再加"、"改一下". Common English triggers: "continue", "add feature", "fix", "refactor", "optimize", "infer spec", "implement", "test", "approve", "distill", "also add", "change". MUST load before any code edit in projects containing .ruyi/ or .ruyirc.
+description: Frontend project Ruyi pipeline router. Use whenever the user asks to add a feature, fix a bug, refactor, optimize code, implement, test, approve a delivery, distill knowledge, infer specs from code, amend an ongoing requirement, or continue ongoing work in a frontend project. Common Chinese triggers: "继续"、"新增"、"修复"、"重构"、"代码优化"、"代码微重构"、"代码反推spec"、"梳理组件规范"、"接入Ruyi"、"通过"、"沉淀"、"再加"、"改一下". Common English triggers: "continue", "add feature", "fix", "refactor", "optimize", "infer spec", "implement", "test", "approve", "distill", "also add", "change". MUST load before any code edit in projects containing .ruyi/ or .ruyirc.
 ---
 
 # Using Ruyi
@@ -10,14 +10,14 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 当本 skill 被加载时，立即按顺序执行：
 
 1. 检查当前工作目录或用户指定项目根目录是否存在 `.ruyi/` 或 `.ruyirc`。
-2. 若存在：声明 `Ruyi 主流程已激活`，读取 `.ruyi/INDEX.md`。**禁止读取 contract / plan / explain 文件正文**。
-   - INDEX 不存在时，仅扫描 `contracts/` 与 `explain/` 的目录名，不读文件正文。
+2. 若存在：声明 `Ruyi 主流程已激活`；先读取 `.ruyirc` 的 `schema_version`。低于当前 schema 时立即路由到 `ruyi-upgrade`，升级前不得继续阶段流转；schema 当前时再读取 `.ruyi/INDEX.md`。**禁止读取 contract / plan / test 文件正文**。
+   - INDEX 不存在时，仅扫描 `contracts/` 与 `tests/` 的目录名，不读文件正文。
    - 列出最多 5 条活动需求候选时，只使用 INDEX 的元信息和一句话业务目标。
 3. 若不存在：判断用户意图是否为初始化；不是初始化则退出 Ruyi 上下文。若是初始化，必须先让用户选择“快速开始”或“完整迁移”，未选择前不得运行 `init_write.py` 或写入 `.ruyi/`。
 4. 在完成上述判断前，不得执行任何代码编辑、文件写入或项目内 shell 命令。
 5. 上下文预算：路由确定前，最多读取 `.ruyi/INDEX.md` 与 1 个目标 module 的目录列表。
-   - 不允许读取多个 feature 的 contract / plan / explain 正文。
-   - 只有路由确定到具体 feature 后，才读取该 feature 的最新 contract。
+   - 不允许读取多个 feature 的 contract / plan / test 正文。
+   - 只有路由确定到具体 feature 后，才读取该 feature 的最新 contract；成熟项目如果存在同 module 的 baseline contract，可同时读取该 baseline 作为业务背景。
    - 跨 feature 引用必须由用户明确指定，不靠扫描自动发现。
 
 如果你跳过这一步直接编辑代码、运行命令或生成阶段产物，你违反了 Ruyi 主流程。停止当前动作，重新进入 Ritual。
@@ -26,7 +26,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 
 `using-ruyi` 是 Ruyi 的独立入口 skill，负责识别用户意图、检查项目状态，并把请求路由到正确的 Ruyi 子 skill。
 
-它不直接生成 `contract / task / explain`，不直接编码，不直接审批，也不独立沉淀知识。
+它不直接生成 `contract / task / test`，不直接编码，不直接审批，也不独立沉淀知识。
 
 ## 2. 核心原则
 
@@ -44,7 +44,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 2. 若存在，优先使用 Ruyi 主流程。
 3. 判断当前项目是否已初始化。
 4. 未初始化时，只能进入 `ruyi-init`，并且必须先完成接入方式选择。
-5. 已初始化时，先判断用户意图。
+5. 已初始化时，先检查 `schema_version`；低于当前版本时先进入 `ruyi-upgrade`，完成后再处理原意图。
 6. 如果用户只说“继续”，先定位当前活动需求；无法唯一定位时请用户确认。
 7. 如果能识别 `module / feature / date`，优先按本文件“路由判定表”推断下一阶段；可选使用 `scripts/route_request.py` 复核。
 8. 路由到对应子 skill，并要求子 skill 执行自身门禁。
@@ -63,12 +63,12 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 | 用户意图 | 子 skill |
 | --- | --- |
 | 初始化已有前端项目 | `../ruyi-init/SKILL.md` |
+| 升级已有 Ruyi 项目结构 | `../ruyi-upgrade/SKILL.md` |
 | 定义新功能、修复、业务重构目标 | `../ruyi-contract/SKILL.md` |
 | 代码优化、代码微重构、无行为变化维护 | `../ruyi-implement/SKILL.md`（轻量维护模式） |
 | 根据已确认需求制定开发计划 | `../ruyi-plan/SKILL.md` |
 | 根据已确认计划编码实现 | `../ruyi-implement/SKILL.md` |
 | 验证实现结果 | `../ruyi-test/SKILL.md` |
-| 生成开发简报 | `../ruyi-explain/SKILL.md` |
 | 记录审批结论 | `../ruyi-approve/SKILL.md` |
 | 从现有代码反推本地规范候选 | `../ruyi-spec-discover/SKILL.md` |
 | 提炼项目或团队规范候选 | `../ruyi-spec-evolve/SKILL.md` |
@@ -81,12 +81,12 @@ agent 负责把用户自然语言映射为下列 intent：
 | intent | 触发场景 |
 | --- | --- |
 | `init` | 初始化、接入 Ruyi、创建 `.ruyi` |
+| `upgrade` | 更新 Ruyi 后规整已有 `.ruyi` 文档结构 |
 | `contract` | 新功能、修复、业务重构、需求澄清、验收标准、自然语言测试用例 |
 | `maintain` | 代码优化、代码微重构、抽函数、拆组件、去重复、类型收紧、lint 整理，且不改变业务行为 |
 | `plan` | 已有 contract，要制定测试策略、开发计划或拆 task |
 | `implement` | 已有 plan，要开始编码、执行 task 或做代码自检 |
 | `test` | 验证、测试、构建、浏览器检查 |
-| `explain` | 生成开发简报、交付说明 |
 | `approve` | 审批、通过、驳回、要求修改 |
 | `spec-discover` | 从现有代码反推 spec、梳理组件规范、整理模块约定、生成本地候选 |
 | `spec-evolve` | 沉淀规范、形成候选、提炼经验 |
@@ -104,7 +104,8 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 - 只读取与当前 `module / feature` 匹配的目录；不允许读取兄弟 feature 的产物正文。
 - 用户未指明 `module / feature` 且 INDEX 无法唯一定位时，向用户询问，不靠扫描全部 contract 推断。
 - 判断“是否缺少 contract”时，只检查目标路径下的文件是否存在，不读取文件正文。
-- 判断“是否已有审批通过”时，只读取目标 feature 最新 explain 的 frontmatter 或摘要信息；不得改写已审批事实。
+- baseline contract 只提供成熟项目当前业务事实背景，不能替代本次变更 contract。
+- 判断“是否已有审批通过”时，只读取目标 feature 最新 test 的 frontmatter 或摘要信息；不得改写已审批事实。
 
 变更意图优先判断：
 
@@ -114,27 +115,25 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 | 类型 A 已确认 | `ruyi-contract`（修订模式） | 原地修订 + `## 修订记录` |
 | 类型 B 已确认 | `ruyi-contract`（修订模式）→ `ruyi-plan`（重评模式） | contract 修订后重评 plan/task/test |
 | 类型 C 已确认 | `ruyi-contract`（新建日期模式） | 旧 contract 加 `superseded_by` |
-| 类型 D 已确认 | `ruyi-contract`（新需求模式） | 新 contract 加 `derived_from`，不修改已审批产物 |
+| 类型 D 已确认 | `ruyi-contract`（返工重开模式） | 重开同一 contract，记录返工原因并重置当前交付状态 |
 
 | 条件 | 下一阶段 | 标准处理 |
 | --- | --- | --- |
 | 项目缺少 `.ruyi/` 或 `.ruyirc` | `ruyi-init` | 先询问接入方式：快速开始 / 完整迁移；未选择前不得写入 `.ruyi/` |
+| 项目 `schema_version` 低于当前版本 | `ruyi-upgrade` | 先机械迁移结构；废弃目录删除另行确认 |
 | 代码优化 / 代码微重构，且不改变用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准 | `ruyi-implement` | 进入轻量维护模式，不要求 contract / plan / task |
-| 缺少 contract | `ruyi-contract` | 拒绝 plan/implement/test/explain/approve/spec-evolve |
+| 缺少 contract | `ruyi-contract` | 拒绝 plan/implement/test/approve/spec-evolve |
 | contract `status` 不是 `confirmed` | `ruyi-contract` | 要求先确认需求 |
 | contract `size: tiny` 且需继续 | `ruyi-implement` | tiny 跳过 plan/task，直接进入实现 |
 | contract 非 tiny 且缺少 plan | `ruyi-plan` | 要求先制定计划 |
 | plan `status` 不是 `confirmed` | `ruyi-plan` | 要求先确认计划 |
-| 非 tiny 且缺少 done task | `ruyi-implement` | 要求先执行 task 并自检 |
+| 存在本地 `in-progress` task checkpoint 且用户要求继续 | `ruyi-implement` | 恢复本地执行进度；task 不作为正式测试门禁 |
 | 缺少 test | `ruyi-test` | 要求先生成验证证据 |
-| test `result: failed` | `ruyi-test` | 拒绝 explain，返回修复或补充验证 |
-| tiny 且 test 通过或带备注通过 | 完成或按需 explain | tiny 默认不强制 explain/approve/spec-candidate |
-| 非 tiny 且缺少 explain | `ruyi-explain` | 要求生成开发简报 |
-| explain `approval: changes-requested/rejected` 且有 `return_stage` | 对应返回阶段 | 按审批结论退回 |
-| explain `approval: conditionally-approved` | `ruyi-approve` | 先处理条件，不进入沉淀 |
-| explain `approval` 不是 `approved` | `ruyi-approve` | 要求审批 |
-| 缺少 spec-candidate | `ruyi-spec-evolve` | 判断是否沉淀候选 |
-| spec-candidate 已存在 | 完成 | 主流程闭环 |
+| test `result: failed` | `ruyi-test` | 返回修复或补充验证 |
+| tiny 且 test 通过或带备注通过 | 完成 | tiny 默认不强制 approve/spec-candidate |
+| 非 tiny 且 test `approval: changes-requested` 且有 `return_stage` | 对应返回阶段 | 按审批结论退回 |
+| 非 tiny 且 test `approval` 不是 `approved` | `ruyi-approve` | 要求审批 test |
+| 非 tiny 且 test `approval: approved` | 完成 | 主流程闭环；存在可复用规则时按需进入 `ruyi-spec-evolve` |
 
 禁止行为：
 
@@ -153,7 +152,7 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 1. 仅读 INDEX 定位是否已有相关 feature。
 2. 已有相关 feature 时，只读该 feature 最新 contract，进入 `ruyi-contract` 修订模式。
 3. 没有相关 feature 时，直接进入 `ruyi-contract` 创建新的 fix contract。
-4. **禁止**读取无关 module 的 contract / plan / explain 正文。
+4. **禁止**读取无关 module 的 contract / plan / test 正文。
 
 ### maintain 意图
 
@@ -173,7 +172,7 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 
 执行：
 
-1. 先判断当前需求是否已有 `approved / conditionally-approved` 的 explain；若有，归为类型 D。
+1. 先判断当前需求是否已有 `approval: approved` 的 test；若有，归为类型 D：重开同一 contract 并记录返工原因。
 2. 再判断是否改变用户故事核心、业务规则、已确认验收标准或需求类型；若是，归为类型 C。
 3. 再判断是否改变需求范围、接口范围、接口对接或影响 task；若是，归为类型 B。
 4. 其它不影响下游的文案、样式、轻微交互微调归为类型 A。
@@ -220,5 +219,4 @@ python <skills-dir>/using-ruyi/scripts/route_request.py --project <project> --in
 - `references/contract-schema.md`
 - `references/plan-schema.md`
 - `references/task-schema.md`
-- `references/explain-schema.md`
 - `references/engineering-discipline.md`

@@ -1,4 +1,4 @@
-# Debugging Discipline
+﻿# Debugging Discipline
 
 ## 1. 目标
 
@@ -50,7 +50,7 @@
 | 同时改多个可疑点 | 每次只验证一个主要假设 |
 | 看见报错就改最近的代码 | 先确认报错与问题现象之间的关系 |
 | 修复后不验证原问题 | 必须用原复现路径或等价证据验证 |
-| 根因没确认就写 explain | 返回 debugging 或 test，不能进入 explain |
+| 根因没确认就写 test 结论 | 返回 debugging 或 test，不能进入 test 结论 |
 | 把临时猜测沉淀进 spec | 未验证内容只能进 open questions 或任务记录 |
 
 ## 6. 检查清单
@@ -65,3 +65,4 @@
 - 修复目标是否能写成 contract 的验收标准？
 
 缺少证据时，可以继续调查，但不能进入正式实现。
+

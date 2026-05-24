@@ -16,7 +16,9 @@ from common import (
 )
 
 
-RUYIRC_CONTENT = """layers:
+RUYIRC_CONTENT = """schema_version: 3
+
+layers:
   - name: team
     path: .ruyi-team
     optional: true
@@ -38,27 +40,14 @@ def project_readme() -> str:
 
 当项目根目录存在 `.ruyi/` 或 `.ruyirc` 时，agent 应优先使用 Ruyi 作为开发协作主流程。
 
-除非用户明确要求不用 Ruyi，否则新功能、修复、重构、测试验证、开发简报、审批和知识沉淀都应进入 Ruyi 对应阶段。
+除非用户明确要求不用 Ruyi，否则新功能、修复、重构、测试验证、审批和知识沉淀都应进入 Ruyi 对应阶段。
 
 - `spec/`：项目长期有效的事实和规范。
 - `contracts/`：每次需求的设计与验收定义。
 - `plans/`：由 contract 转化出的开发计划、测试策略和 task 拆分。
-- `tasks/`：由 plan 拆分出的开发任务。
-- `tests/`：每次 contract 对应的正式验证结果。
-- `explain/`：面向 PM 的开发简报。
-- `spec-candidates/`：本地临时知识沉淀候选，默认不提交 git，不自动改写正式 spec。
-- `spec-archive/`：本地 candidate 处理归档，默认不提交 git。
-- `spec-patches/`：本地人工合入补丁，默认不提交 git。
-- `workspace/`：临时过程材料，不提交正式内容。
-"""
-
-
-def workspace_readme() -> str:
-    return """# Ruyi Workspace
-
-该目录用于临时分析、草稿和过程材料。
-
-除本 README 外，`workspace/` 默认不应提交到 git。
+- `tasks/`：需要跨轮次恢复实现进度时按需创建的本地 checkpoint，不提交 git。
+- `tests/`：每次 contract 对应的正式验证结果和审批状态。
+- `spec-candidates/`：用户延后审视或代码反推批量产出时按需创建的本地候选，不提交 git。
 """
 
 
@@ -111,6 +100,8 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 本目录只放长期有效的项目事实和项目规则。
 
+读取项目规范时必须先读本文件，再按链接读取相关顶层 baseline、`references/shared/` 或 `references/modules/` 下的细分规范。
+
 ## 核心文件
 
 - `project-overview.md`：项目目标、技术栈和业务概况。
@@ -125,6 +116,8 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 - `references/shared/`：跨模块共享规范。
 - `references/modules/`：具体模块或功能的规范。
+
+`references/` 不维护二级 INDEX；本文件是唯一正式 spec 索引。
 """,
         "project-overview.md": frontmatter("observed", "init 项目事实读取") + f"""# 项目概览
 
@@ -153,6 +146,10 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 ## 变更前后自检
 
 待补充。
+
+## 相关细分规范
+
+待补充。这里应链接到 `references/shared/` 或 `references/modules/` 下的开发过程规范。
 """,
         "coding-baseline.md": frontmatter("open", "init 占位", needs_review=True) + """# 代码编写基线
 
@@ -163,6 +160,10 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 ## 样式与交互
 
 待补充。
+
+## 相关细分规范
+
+待补充。这里应链接到 `references/shared/` 或 `references/modules/` 下的代码编写规范。
 """,
         "testing-baseline.md": frontmatter("observed" if tests else "open", "init package.json 检测", needs_review=not bool(tests)) + f"""# 测试基线
 
@@ -187,31 +188,6 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 - `references/shared/api/conventions.md`：命名 / 分页 / 排序通用约定。
 
 Ruyi 只引用 API 权威源，不拷贝完整 Swagger / OpenAPI / Apifox 字段表。
-""",
-        "references/shared/INDEX.md": frontmatter("open", "init shared references 索引", needs_review=True) + """# Shared Spec References
-
-跨模块共享规范放在这里。
-
-建议按领域建文件夹，例如：
-
-- `api/`
-- `components/`
-- `routing/`
-- `errors/`
-""",
-        "references/modules/INDEX.md": frontmatter("open", "init module references 索引", needs_review=True) + """# Module Spec References
-
-具体模块、页面或功能规范放在这里。
-
-同一功能或公共组件只建一个文件夹，在文件夹内按主题拆分文件，例如：
-
-```text
-table/
-  simple-usage.md
-  usage.md
-  columns.md
-  internals.md
-```
 """,
     }
     if is_full_migration(facts):
@@ -285,7 +261,6 @@ def docs_registry(facts: dict[str, Any]) -> str:
     return frontmatter("confirmed_by_user" if sources else "open", "init 文档评估", needs_review=not bool(sources)) + f"""# 项目外部文档入口
 
 > 只记录已评估并确认仍有参考价值的入口；陈旧 / 已废文档不录入。
-> 完整评估痕迹见 `.ruyi/workspace/init-evaluation-notes.md`。
 
 {body}"""
 
@@ -310,87 +285,101 @@ def interview_bank(facts: dict[str, Any]) -> str:
     return frontmatter("confirmed_by_user", "init 澄清问卷") + "# 澄清问卷答案\n\n" + "\n".join(sections)
 
 
-def evaluation_notes(facts: dict[str, Any]) -> str:
-    registered = useful_sources(facts)
-    partial = partial_sources(facts)
-    discarded = discarded_sources(facts)
-
-    def source_lines(items: list[dict[str, Any]], empty: str) -> str:
-        if not items:
-            return empty
-        lines: list[str] = []
-        for item in items:
-            path = item.get("path") or item.get("url") or "未知来源"
-            reason = item.get("reason") or item.get("summary") or item.get("content") or "未填写评估说明。"
-            lines.append(f"### {path}\n- 评估：{reason}")
-            if item.get("distilled_to"):
-                lines.append(f"- 蒸馏目标：spec/{item['distilled_to']}")
-        return "\n\n".join(lines)
-
-    return f"""# Init 评估笔记（{today()}）
-
-> 一次性记录，不进 agent 默认上下文。仅供后续 init 复盘或团队回顾。
-
-## 已录入 docs-registry（{len(registered)} 条）
-
-{source_lines(registered, "暂无。")}
-
-## 已蒸馏关键事实进 spec（{len(partial)} 条）
-
-{source_lines(partial, "暂无。")}
-
-## 未录入也未蒸馏（{len(discarded)} 条）
-
-{source_lines(discarded, "暂无。")}
-"""
-
-
-def distilled_specs(facts: dict[str, Any]) -> dict[str, str]:
+def baseline_contracts(facts: dict[str, Any]) -> dict[str, str]:
     if not is_full_migration(facts):
         return {}
-    specs: dict[str, str] = {}
+    contracts: dict[str, dict[str, list[str]]] = {}
     for source in partial_sources(facts):
         facts_list = source.get("distilled_facts") or []
+        observed_list = source.get("observed_facts") or source.get("code_observed_facts") or []
         if not facts_list:
             continue
-        target = safe_distilled_target(source.get("distilled_to"))
-        title = source.get("title") or source.get("path") or "文档蒸馏"
-        specs[target] = frontmatter(
-            "distilled",
-            "init 文档蒸馏",
-            needs_review=True,
-        ) + f"""# {title}（从文档蒸馏）
-
-## 当前事实 / 待复核事实
-
-{format_list([str(item) for item in facts_list])}
-"""
-    return specs
+        target = safe_baseline_contract_target(source, facts)
+        entry = contracts.setdefault(target, {"titles": [], "distilled": [], "observed": []})
+        entry["titles"].append(str(source.get("title") or "文档蒸馏"))
+        entry["distilled"].extend(str(item) for item in facts_list)
+        entry["observed"].extend(str(item) for item in observed_list)
+    return {target: render_baseline_contract(target, data) for target, data in contracts.items()}
 
 
-def safe_distilled_target(value: Any) -> str:
-    default = "references/shared/brownfield-distilled.md"
+def safe_baseline_contract_target(source: dict[str, Any], facts: dict[str, Any]) -> str:
+    default_module = safe_contract_segment(
+        source.get("module")
+        or source.get("target_module")
+        or brownfield_facts(facts).get("default_module")
+        or "project"
+    )
+    default = f"{default_module}/_baseline/current.md"
+    value = source.get("baseline_contract") or source.get("contract_target") or source.get("distilled_to")
     raw = str(value or default).replace("\\", "/").lstrip("/")
+    if raw.startswith("contracts/"):
+        raw = raw.removeprefix("contracts/")
     target = PurePosixPath(raw)
     if not target.parts or any(part in ("", ".", "..") for part in target.parts):
         return default
-    if target.suffix != ".md":
+    if len(target.parts) != 3 or target.suffix != ".md":
         return default
-    top_level_allowed = {
-        "project-overview.md",
-        "project-structure.md",
-        "development-baseline.md",
-        "coding-baseline.md",
-        "testing-baseline.md",
-        "api.md",
-        "open-questions.md",
-    }
-    text = target.as_posix()
-    if text in top_level_allowed:
-        return text
-    if text.startswith("references/shared/") or text.startswith("references/modules/"):
-        return text
-    return default
+    module, feature, filename = target.parts
+    if not all(safe_contract_segment(part) == part for part in (module, feature, filename.removesuffix(".md"))):
+        return default
+    return target.as_posix()
+
+
+def safe_contract_segment(value: Any) -> str:
+    text = str(value or "").strip().replace("\\", "/").strip("/")
+    if "/" in text:
+        text = text.split("/")[-1]
+    cleaned = "".join(char if char.isalnum() or char in ("-", "_") else "-" for char in text.lower())
+    cleaned = "-".join(part for part in cleaned.split("-") if part)
+    return cleaned or "project"
+
+
+def render_baseline_contract(target: str, data: dict[str, list[str]]) -> str:
+    module, feature, _filename = PurePosixPath(target).parts
+    titles = sorted(set(data.get("titles") or []))
+    distilled = sorted(set(data.get("distilled") or []))
+    observed = sorted(set(data.get("observed") or []))
+    observed_section = format_list(observed) if observed else "- 暂无代码观察事实；后续可由代码反推补充。"
+    return f"""---
+type: baseline
+status: draft
+module: {module}
+feature: {feature}
+confidence: distilled
+source: init full-migration
+verified_at: {today()}
+needs_review: true
+---
+
+# Baseline Contract：{module}/{feature}
+
+## 定位
+
+本文件记录成熟项目接入 Ruyi 时，从历史文档蒸馏和现有代码观察得到的当前业务事实。
+
+它不是一次新需求，不直接进入 plan / implement / test；后续相关变更应先读取本 baseline，再创建本次变更 contract。
+
+## 来源摘要
+
+{format_list(titles) if titles else "- init full-migration"}
+
+## 当前业务事实
+
+{format_list(distilled) if distilled else "- 暂无。"}
+
+## 代码观察
+
+{observed_section}
+
+## 已知不确定项
+
+- 本文件为 `draft` 且 `needs_review: true` 时，引用前必须请用户确认。
+
+## 维护规则
+
+- 后续变更如果改变当前业务事实，应在交付后更新本 baseline 或生成 baseline patch。
+- 稳定的开发约束进入 `.ruyi/spec/`；模块业务事实保留在 baseline contract。
+"""
 
 
 def unknown_answer_count(facts: dict[str, Any]) -> int:
@@ -435,10 +424,10 @@ def brownfield_result(facts: dict[str, Any]) -> dict[str, Any]:
         "mode": "full-migration",
         "registered_docs": [str(item.get("path") or item.get("url") or item.get("title")) for item in useful_sources(facts)],
         "distilled_docs": [str(item.get("path") or item.get("title")) for item in partial_sources(facts) if item.get("distilled_facts")],
+        "baseline_contracts": sorted(baseline_contracts(facts).keys()),
         "interview_answer_count": sum(len(value) if isinstance(value, dict) else 1 for value in (brownfield_facts(facts).get("interview_answers") or {}).values()),
         "open_topics": brownfield_facts(facts).get("open_topics") or [],
         "fallback": fallback_required(facts),
-        "evaluation_notes": ".ruyi/workspace/init-evaluation-notes.md",
     }
 
 
@@ -464,7 +453,7 @@ def claude_activation_block() -> str:
 任何代码改动、bug 修复、新增功能、测试、审批、知识沉淀的请求，必须先加载 `using-ruyi` skill 走 Ritual：
 
 1. 检查 `.ruyi/` 状态。
-2. 仅读取 `.ruyi/INDEX.md`，不读 contract / plan / explain 正文。
+2. 仅读取 `.ruyi/INDEX.md`，不读 contract / plan / test 正文。
 3. 路由到对应子 skill 后，才读取该 feature 的具体产物。
 
 不允许跳过 `using-ruyi` 直接编辑代码或执行 shell 命令。
@@ -502,7 +491,7 @@ description: Manually load the Ruyi pipeline router (using-ruyi)
 Load the using-ruyi skill and execute its Ritual:
 
 1. Detect `.ruyi/` state.
-2. Read `.ruyi/INDEX.md` only. Do NOT read contract / plan / explain bodies.
+2. Read `.ruyi/INDEX.md` only. Do NOT read contract / plan / test bodies.
 3. List up to 5 active feature candidates from INDEX.
 4. Route my next message to the correct sub-skill.
 5. Only after routing to a specific feature, read that feature's latest contract.
@@ -515,7 +504,7 @@ def ruyi_hook_command() -> str:
     reminder = (
         "<system-reminder>This project uses Ruyi. You MUST load the using-ruyi skill "
         "and execute its Ritual before any code edit, file write, shell command, or stage execution. "
-        "Read .ruyi/INDEX.md only before routing; do not scan contract / plan / explain bodies. "
+        "Read .ruyi/INDEX.md only before routing; do not scan contract / plan / test bodies. "
         "Failure to do so violates the Ruyi main flow.</system-reminder>"
     )
     return f"sh -c \"[ -d .ruyi ] || [ -f .ruyirc ]\" && echo '{reminder}' || true"
@@ -570,23 +559,19 @@ def write_init(project_path: str | Path, facts: dict[str, Any]) -> dict[str, Any
     create_file(project, ".ruyi/README.md", project_readme(), created, skipped)
     create_file(project, ".ruyi/INDEX.md", project_index(), created, skipped)
     create_file(project, ".ruyi/project-actions.md", project_actions(), created, skipped)
-    create_file(project, ".ruyi/workspace/README.md", workspace_readme(), created, skipped)
     create_file(project, ".claude/commands/ruyi.md", slash_command(), created, skipped)
     append_claude_md(project, created, skipped, updated)
 
     for filename, content in spec_contents(facts).items():
         create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
 
-    for filename, content in distilled_specs(facts).items():
-        create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
+    for filename, content in baseline_contracts(facts).items():
+        create_file(project, f".ruyi/contracts/{filename}", content, created, skipped)
 
     if fallback_required(facts):
         for filename, content in fallback_specs().items():
             create_file(project, f".ruyi/spec/{filename}", content, created, skipped)
         notes.append("知识基线非常薄弱：本次 init 只记录 observed/open 事实，后续 contract 阶段必须更仔细澄清。")
-
-    if is_full_migration(facts):
-        create_file(project, ".ruyi/workspace/init-evaluation-notes.md", evaluation_notes(facts), created, skipped)
 
     if not facts.get("no_hook"):
         merge_claude_settings(project, skipped, updated, notes)

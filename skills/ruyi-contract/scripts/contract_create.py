@@ -11,7 +11,7 @@ from typing import Any
 
 
 CONTRACT_TYPES = ("new-feature", "fix", "refactor", "change")
-CONTRACT_STATUSES = ("draft", "confirmed")
+CONTRACT_STATUSES = ("draft", "confirmed", "reopened")
 CONTRACT_SIZES = ("tiny", "standard", "large")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -126,8 +126,6 @@ def render_contract(payload: dict[str, Any]) -> str:
     }
     if payload.get("superseded_by"):
         frontmatter["superseded_by"] = payload["superseded_by"]
-    if payload.get("derived_from"):
-        frontmatter["derived_from"] = payload["derived_from"]
     frontmatter_text = "\n".join(f"{key}: {value}" for key, value in frontmatter.items())
 
     return f"""---
@@ -183,6 +181,19 @@ def create_contract(project_path: str | Path, payload: dict[str, Any]) -> dict[s
 
     target = contract_path(project, payload)
     if target.exists():
+        existing = target.read_text(encoding="utf-8")
+        if "status: reopened" in existing and payload.get("status") in ("draft", "confirmed"):
+            history_start = existing.find("\n## 返工记录")
+            history = existing[history_start:] if history_start != -1 else ""
+            target.write_text(render_contract(payload).rstrip() + "\n" + history, encoding="utf-8")
+            return {
+                "created": False,
+                "updated": True,
+                "reason": None,
+                "message": "已重开的 contract 当前内容已更新。",
+                "path": str(target),
+                "index": rebuild_index_if_available(project),
+            }
         return {
             "created": False,
             "reason": "already-exists",
@@ -220,7 +231,6 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--test-case", action="append", required=True, help="Natural-language test case")
     parser.add_argument("--api-scope", action="append", default=[], help="API scope item for this contract")
     parser.add_argument("--superseded-by", help="Replacement contract path/date for semantic amendments")
-    parser.add_argument("--derived-from", help="Source contract path for post-approval changes")
     parser.add_argument("--problem", help="Required for fix: observed problem")
     parser.add_argument("--impact", help="Required for fix: impact scope")
     parser.add_argument("--verification-direction", help="Required for fix: verification direction")
@@ -242,7 +252,6 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
         "test_cases": args.test_case,
         "api_scope": args.api_scope,
         "superseded_by": args.superseded_by,
-        "derived_from": args.derived_from,
         "problem": args.problem,
         "impact": args.impact,
         "verification_direction": args.verification_direction,

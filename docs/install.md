@@ -19,8 +19,10 @@ Ruyi 仓库/
     ├── ruyi-plan/
     ├── ruyi-implement/
     ├── ruyi-test/
-    ├── ruyi-explain/
+    ├── ruyi-explain/      # deprecated compatibility entry
     ├── ruyi-approve/
+    ├── ruyi-upgrade/
+    ├── ruyi-spec-discover/
     ├── ruyi-spec-evolve/
     └── ruyi-spec-merge/
 
@@ -31,8 +33,10 @@ Agent skills 目录/
 ├── ruyi-plan/
 ├── ruyi-implement/
 ├── ruyi-test/
-├── ruyi-explain/
+├── ruyi-explain/      # deprecated compatibility entry
 ├── ruyi-approve/
+├── ruyi-upgrade/
+├── ruyi-spec-discover/
 ├── ruyi-spec-evolve/
 └── ruyi-spec-merge/
 ```
@@ -123,8 +127,10 @@ ruyi-contract
 ruyi-plan
 ruyi-implement
 ruyi-test
-ruyi-explain
+ruyi-explain  # deprecated compatibility entry
 ruyi-approve
+ruyi-upgrade
+ruyi-spec-discover
 ruyi-spec-evolve
 ruyi-spec-merge
 ```
@@ -143,6 +149,14 @@ git pull
 ```
 
 复制安装的场景需要重新复制 `skills/` 下的各个目录。
+
+更新 skills 后，已经初始化过的业务项目应先通过统一入口运行升级：
+
+```text
+请使用 using-ruyi 继续当前项目工作；如果项目 schema 落后，先运行 ruyi-upgrade。
+```
+
+`ruyi-upgrade` 会自动迁移 `.ruyirc`、本地忽略规则、INDEX、旧 explain 审批、旧 frontend baseline 和旧二级 spec INDEX。检测到旧 `explain / workspace / spec-archive / spec-patches` 目录时，会先询问是否删除；删除确认完成后才标记为 schema v3。
 
 ## 卸载
 

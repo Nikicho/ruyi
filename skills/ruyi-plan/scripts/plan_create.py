@@ -247,6 +247,19 @@ def create_plan(project_path: str | Path, payload: dict[str, Any]) -> dict[str, 
 
     target = plan_path(project, payload)
     if target.exists():
+        existing = target.read_text(encoding="utf-8")
+        if "status: draft" in existing and "## 状态变更记录" in existing:
+            history_start = existing.find("\n## 状态变更记录")
+            history = existing[history_start:] if history_start != -1 else ""
+            target.write_text(render_plan(payload).rstrip() + "\n" + history, encoding="utf-8")
+            return {
+                "created": False,
+                "updated": True,
+                "reason": None,
+                "message": "返工后的 plan 当前内容已更新。",
+                "path": str(target),
+                "index": rebuild_index_if_available(project),
+            }
         return {
             "created": False,
             "reason": "already-exists",

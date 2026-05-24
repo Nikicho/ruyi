@@ -3,7 +3,7 @@
 # Ruyi 如意
 
 > A frontend dev contract framework for AI coding agents.
-> Forces "requirement -> plan -> implement -> verify -> brief -> approve -> distill" as a hard pipeline so agents cannot skip stages or fake completion.
+> Forces "requirement -> plan -> implement -> verify -> approve" as a hard pipeline, with optional spec distillation after delivery.
 
 Ruyi 是一个面向前端项目的 AI 协作开发框架，以 code agent skill 包的形式提供固定开发流程、项目知识沉淀和轻量脚本辅助。
 
@@ -12,8 +12,8 @@ Ruyi 是一个面向前端项目的 AI 协作开发框架，以 code agent skill
 ## 核心目标
 
 - 让前端需求从“口头描述”进入可追踪的 contract。
-- 让编码、验证、开发简报、审批和知识沉淀按固定阶段推进。
-- 让项目长期规则沉淀到 `.ruyi/spec/`，让单次需求留在 `contract / task / test / explain`。
+- 让编码、验证、审批和知识沉淀按固定阶段推进。
+- 让项目长期规则沉淀到 `.ruyi/spec/`，让单次需求留在 `contract / plan / test`，执行恢复点只留本地。
 - 让 agent 不跳过需求定义、验证证据和审批确认。
 
 ## 支持范围
@@ -40,14 +40,15 @@ skills/
 ├── ruyi-plan/
 ├── ruyi-implement/
 ├── ruyi-test/
-├── ruyi-explain/
+├── ruyi-explain/      # deprecated compatibility entry
 ├── ruyi-approve/
+├── ruyi-upgrade/
 ├── ruyi-spec-discover/
 ├── ruyi-spec-evolve/
 └── ruyi-spec-merge/
 ```
 
-`using-ruyi` 是入口 skill。其他 skill 只负责各自阶段。
+`using-ruyi` 是入口 skill。其他 skill 只负责各自阶段。`ruyi-explain` 仅保留为 schema v3 兼容提示入口，不属于正式主流程。
 
 安装时把 `skills/` 文件夹里的内容放到目标 code agent 的 skills 目录即可。每个 skill 都带自己的 `references/`，不依赖共享目录，方便 Trae、Claude Code CLI 等工具直接识别。
 
@@ -56,7 +57,7 @@ skills/
 Ruyi 有三层，不应该混在一起：
 
 - `skills/`：Ruyi 本体 skill 包，提供固定主流程、协议 schema、阶段 skill 和辅助脚本。
-- `.ruyi/`：项目级知识层，放在具体业务项目根目录，记录当前项目的规范、需求、计划、验证、简报和沉淀候选。
+- `.ruyi/`：项目级知识层，放在具体业务项目根目录，记录当前项目的规范、需求、计划、验证、审批和沉淀候选。
 - `ruyi-team/`：团队级知识层，可选存在，用于放团队统一规范、跨项目经验、团队动作和公共约束。
 
 项目初始化时主要读取当前项目，不要求存在 `ruyi-team/`。团队级信息是在协作开发过程中由 agent 按需读取，用来和项目级规范合并判断。
@@ -84,12 +85,11 @@ Ruyi 固定主流程：
 
 1. 初始化：生成 `.ruyirc` 和 `.ruyi/`。
 2. 需求定义：生成 `contract`。
-3. 开发计划：生成 `plan` 与必要 `task`。
+3. 开发计划：生成 `plan`。
 4. 编码实现：代码变更、实现自检和代码质量结论。
 5. 测试验证：生成 `test`。
-6. 开发简报：生成 `explain`。
-7. 审批：更新 explain 中的 `approval`。
-8. 知识沉淀：生成 `spec-candidate`。
+6. 审批：更新 test 中的 `approval`。
+7. 知识沉淀（按需）：用户确认时更新正式 `spec`，延后审视时生成本地 `spec-candidate`。
 
 项目不能改写主流程，只能通过 `.ruyi/project-actions.md` 追加项目特殊动作。
 
@@ -116,13 +116,7 @@ Ruyi 固定主流程：
 │       └── modules/
 ├── contracts/
 ├── plans/
-├── tasks/
 ├── tests/
-├── explain/
-├── spec-candidates/  # local, gitignored
-├── spec-archive/     # local, gitignored
-├── spec-patches/     # local, gitignored
-├── workspace/
 ├── INDEX.md
 ├── project-actions.md
 └── README.md
@@ -144,13 +138,9 @@ CLAUDE.md
 - `spec/references/modules/`：具体模块、页面、功能或公共组件规范。
 - `contracts/`：某次需求的设计与验收定义。
 - `plans/`：围绕 contract 的开发计划、测试策略和 task 拆分。
-- `tasks/`：围绕 plan 的执行单元。
-- `tests/`：某次 contract 的正式验证结果。
-- `explain/`：面向 PM 的开发简报。
-- `spec-candidates/`：本地临时知识沉淀候选，默认不提交 git；agent 读取正式 spec 时可按需读取，但不能覆盖正式 spec。
-- `spec-archive/`：本地 candidate 处理归档，默认不提交 git。
-- `spec-patches/`：本地人工合入补丁，默认不提交 git；确认后应把真正规则合入正式 spec。
-- `workspace/`：临时过程材料，默认不提交正式内容。
+- `tasks/`：仅在长执行需要恢复进度时按需创建的本地 checkpoint，默认不提交 git。
+- `tests/`：某次 contract 的正式验证结果和审批状态。
+- `spec-candidates/`：仅在延后审视或代码反推待审时按需创建的本地候选，默认不提交 git；确认后直接更新正式 spec 并删除 candidate。
 - `INDEX.md`：跨需求轻量索引，Ritual 阶段优先读取它，不扫全部产物。
 - `.claude/` 与 `CLAUDE.md`：入口保护和手动兜底。
 
@@ -161,7 +151,7 @@ CLAUDE.md
 - “把这个 Vue 项目接入 Ruyi。”
 - “新增订单关键词搜索。”
 - “继续。”
-- “生成开发简报。”
+- “这个交付通过。”
 - “这个交付通过。”
 - “把这次经验沉淀一下。”
 
@@ -209,7 +199,7 @@ python .\skills\using-ruyi\scripts\route_request.py --project <project> --intent
 
 脚本只判断下一阶段，不生成正式产物。自然语言意图仍由 agent 判断。Python 不可用时，agent 必须按 schema 和路由判定表直接读取 `.ruyi/`，不能绕过门禁。
 
-Ritual 阶段只读 `.ruyi/INDEX.md`；路由确定到具体 feature 前，不读取多个 contract / plan / explain 正文。
+Ritual 阶段只读 `.ruyi/INDEX.md`；路由确定到具体 feature 前，不读取多个 contract / plan / test 正文。需要项目规范时，先读 `.ruyi/spec/INDEX.md`。
 
 ## 阶段脚本
 
@@ -217,15 +207,15 @@ Ritual 阶段只读 `.ruyi/INDEX.md`；路由确定到具体 feature 前，不�
 
 ```text
 ruyi-init        初始化项目
+ruyi-upgrade     升级已接入项目的 Ruyi 文档结构
 ruyi-contract    创建 contract
 ruyi-plan        创建 plan
-ruyi-implement   创建 task
+ruyi-implement   编码实现，长任务按需维护本地 checkpoint
 ruyi-test        创建 test
-ruyi-explain     创建 explain
-ruyi-approve     更新 explain 审批状态
+ruyi-approve     更新 test 审批状态
 ruyi-spec-discover 从现有代码反推本地 spec-candidate
-ruyi-spec-evolve 创建 spec-candidate
-ruyi-spec-merge  周期性人工合入 spec-candidate
+ruyi-spec-evolve 按需更新正式 spec 或暂存 candidate
+ruyi-spec-merge  人工处理并清理本地 candidate
 ```
 
 这些脚本用于稳定写入协议产物，不替代 agent 的需求澄清、编码实现、测试判断和审批沟通。
@@ -247,7 +237,7 @@ Ruyi 不维护后端 API 文档本体，只维护三类信息：
 首版最小主流程已经跑通：
 
 ```text
-init -> contract -> plan -> task/implement -> test -> explain -> approve -> spec-candidate
+init/upgrade -> contract -> plan -> implement -> test -> approve -> complete
 ```
 
 开发仓库中已用两个示例需求验证：
@@ -259,8 +249,8 @@ init -> contract -> plan -> task/implement -> test -> explain -> approve -> spec
 
 - `board/missing-acceptance`：contract 缺验收标准，阻止进入 plan。
 - `orders/orphan-plan`：孤立 plan，阻止进入 implement。
-- `board/failed-test`：test failed，阻止进入 explain。
-- `orders/no-test-evidence`：explain 风险缺少 test 证据，lint 拒绝。
+- `board/failed-test`：test failed，阻止进入 approve。
+- `orders/no-test-evidence`：test 风险缺少验证证据，阻止审批。
 - `board/premature`：approval pending，阻止 spec-evolve。
 - `board/copy-tweak`：tiny 分档示例，完成 contract -> test 的轻量路径。
 

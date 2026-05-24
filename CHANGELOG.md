@@ -1,19 +1,29 @@
 # Changelog
 
-## 1.0.3 - 2026-05-23
+## 1.0.3 - 2026-05-24
 
-### 成熟项目业务基线
+### Schema v3 主流程
 
-- 完整迁移不再把历史文档蒸馏出的模块业务事实写入正式 `spec`，改为生成 baseline contract。
-- baseline contract 写入 `.ruyi/contracts/<module>/_baseline/current.md` 或 `.ruyi/contracts/<module>/<feature>/baseline.md`，用于记录当前业务事实，不直接进入交付主流程。
-- 支持结合文档蒸馏与代码观察建立 baseline；待确认内容保留为 `draft`，避免把不确定事实当成正式规则。
-- `spec` 的边界收敛为长期规则、跨模块约束、项目结构事实和索引；`using-ruyi` 仅在路由到相关模块后把 baseline 作为背景读取。
+- 新项目直接初始化为 `schema_version: 3`。
+- 正式主流程调整为 `contract -> plan -> implement -> test -> approve`，不再生成正式 `explain`。
+- `test` 同时承载验证摘要、证据、风险和 `approval` 审批状态。
+- `ruyi-approve` 改为直接更新对应 test，拒绝未通过或未锚定 contract/plan 的 test。
+- `ruyi-explain` 退役为兼容提示入口，脚本只返回 `deprecated-in-schema-v3`，不再写 `.ruyi/explain/`。
 
-### Test 与 Explain 精简
+### 存量项目升级
 
-- `ruyi-test` 调整为最小验证账本：默认聚合记录验收项、验证方式和证据，只在失败或存在风险时展开附加章节。
-- `ruyi-explain` 调整为面向 PM 的交付说明：默认只保留交付摘要与验证结论，风险和必要备注按需出现。
-- `test` 与 `explain` 的 schema、脚本及各发布 skill 的内置 references 同步更新，避免自动生成空章节或技术流水账。
+- `ruyi-upgrade` 支持无版本、v1、v2 项目升级到 schema v3。
+- 旧 explain 审批状态迁移到对应 test。
+- 旧 `frontend-baseline.md` 拆分为 `development-baseline.md` 和 `coding-baseline.md` 后删除。
+- 旧 `spec/references/shared/INDEX.md` 与 `spec/references/modules/INDEX.md` 合并到 `.ruyi/spec/INDEX.md` 后删除。
+- 废弃目录 `explain / workspace / spec-archive / spec-patches` 需要用户确认后删除；删除完成后才标记 `schema_version: 3`。
+
+### Spec 与知识沉淀
+
+- `.ruyi/spec/INDEX.md` 成为唯一正式 spec 检索入口。
+- 顶层 baseline 只保留通用规则和索引摘要，开发时必须继续读取其链接到的 references。
+- `spec-candidate` 来源从 approved explain 改为 approved test 或 code observation。
+- 类型 D 返工重开时，不再依赖 explain，改为重置同一路径下 contract/plan/test 状态。
 
 ## 1.0.2 - 2026-05-20
 

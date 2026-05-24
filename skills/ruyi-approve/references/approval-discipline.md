@@ -2,20 +2,22 @@
 
 ## 1. 目标
 
-approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接受结论，并决定下一步回到哪个阶段。
+approve 阶段负责记录 PM 对本次交付的接受或返工结论，并决定下一步回到哪个阶段。
 
 审批不替代代码 review，也不替代测试验证。
 
 本纪律内化自 Superpowers 的 `receiving-code-review` 和 `finishing-a-development-branch`：
 
 - 吸收 `receiving-code-review` 的反馈处理纪律：先判断反馈是否明确、可执行、需要澄清，再决定返回阶段。
-- 吸收 `finishing-a-development-branch` 的收尾意识：审批结论必须明确交付状态、条件、风险或下一步。
+- 吸收 `finishing-a-development-branch` 的收尾意识：审批结论必须明确交付状态和下一步。
 - 审批反馈面向交付接受度，不替代 implement 阶段的代码质量 review。
 
 ## 2. 硬门禁
 
-- 没有 explain 或等价开发简报，不进入审批。
-- explain 没有明确对应 contract、plan 和 test，不进入审批。
+- 没有对应 test，不进入审批。
+- test 没有明确对应 contract 和 plan，不进入审批。
+- test 的 `result` 不是 `passed` 或 `passed-with-notes`，不进入审批。
+- test 的 `approval` 不是 `pending`，不重复审批。
 - 审批不能补写验证结果。
 - 审批不修改 contract 的历史事实。
 - 需要修改时，必须明确返回阶段。
@@ -29,8 +31,8 @@ approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接�
 
 ## 4. 最小流程
 
-1. 读取 explain。
-2. 确认对应 contract、plan 和 test。
+1. 读取 test。
+2. 确认 test 对应 contract 和 plan。
 3. 读取验证摘要和风险项。
 4. 按 `references/approval-schema.md` 记录审批结论。
 5. 如果未通过，明确返回阶段。
@@ -40,7 +42,8 @@ approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接�
 
 | 反模式 | 正确处理 |
 | --- | --- |
-| 没有 explain 直接问是否通过 | 先生成 explain |
+| 没有 test 直接问是否通过 | 先完成验证并生成 test |
+| test 失败还要求审批 | 返回 test 或 implement |
 | 把审批当代码 review | 代码 review 是工程质量活动，不是 PM 审批 |
 | 审批时改需求范围 | 返回 contract 修订 |
 | 审批时要求调整实施方案 | 返回 plan 修订 |
@@ -49,7 +52,7 @@ approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接�
 
 ## 6. 具体反模式（Anti-patterns）
 
-### ❌ 用户说“通过，但上线前必须补个自动化”，我标 approved
+### 用户说“通过，但上线前必须补个自动化”，我标 approved
 
 **触发场景**：用户同意交付，但附带后置条件。
 
@@ -59,7 +62,7 @@ approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接�
 
 **正确做法**：标记 `changes-requested`，写明 `return_stage`，条件处理并重新验收后再审批。
 
-### ❌ 用户说“不行”，我只记录原因但不返回阶段
+### 用户说“不行”，我只记录原因但不返回阶段
 
 **触发场景**：PM 拒绝交付或要求重做。
 
@@ -73,8 +76,10 @@ approve 阶段负责记录 PM 对本次交付的接受、拒绝或有条件接�
 
 审批前检查：
 
-- explain 是否存在？
-- explain 是否对应明确 contract、plan 和 test？
+- test 是否存在？
+- test 是否对应明确 contract 和 plan？
+- test 是否已经通过或带说明通过？
+- test 的 `approval` 是否为 `pending`？
 - 验证摘要是否存在？
 - 风险和未覆盖项是否透明？
 - 审批结论是否属于允许枚举？

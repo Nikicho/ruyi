@@ -147,6 +147,7 @@ module: {payload["module"]}
 feature: {payload["feature"]}
 date: {payload["date"]}
 result: {payload["result"]}
+approval: pending
 ---
 
 # Test：{payload["title"]}

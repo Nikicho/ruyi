@@ -1,6 +1,6 @@
 ---
 name: ruyi-test
-description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is verification. Handles frontend validation, fast-browser UI automation, natural-language test case execution, manual evidence, coverage notes, and verification summary before explain.
+description: Routed by using-ruyi. Use only after using-ruyi has determined the next stage is verification. Handles frontend validation, fast-browser UI automation, natural-language test case execution, manual evidence, coverage notes, and verification summary before approval.
 ---
 
 # Ruyi Test
@@ -35,7 +35,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 6. 执行验证命令、UI 自动化或手工验证步骤。
 7. 按 `references/test-schema.md` 以最小证据摘要记录验收、证据和结论；失败、风险、未覆盖项仅在存在时展开。
 8. 验证失败时返回 implement、plan 或 contract。
-9. 验证通过后，允许进入 `ruyi-explain`。
+9. 验证通过后，允许进入 `ruyi-approve`。
 
 ## 5. 产物要求
 
@@ -49,6 +49,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 
 - 验收项与对应证据。
 - 验证结论。
+- `approval: pending` 审批状态。
 - `failed` 时的失败项。
 - `failed` 或 `passed-with-notes` 时的风险或未覆盖项。
 
@@ -69,6 +70,7 @@ python <skills-dir>/ruyi-test/scripts/test_create.py --project <project> --modul
 - 校验对应 plan 存在且 `status: confirmed`。
 - 按固定路径写入 `.ruyi/tests/<module>/<feature>/<contract-date>.md`。
 - 不覆盖已有 test。
+- 初始化 `approval: pending`，等待 `ruyi-approve` 更新。
 - 记录 UI 自动化证据或无法自动化的原因。
 
 脚本不负责选择测试策略，也不替代实际验证。
@@ -79,7 +81,6 @@ python <skills-dir>/ruyi-test/scripts/test_create.py --project <project> --modul
 - `references/contract-schema.md`
 - `references/plan-schema.md`
 - `references/test-schema.md`
-- `references/explain-schema.md`
 - `references/engineering-discipline.md`
 - `references/verification-discipline.md`
 - `references/fast-browser-testing.md`

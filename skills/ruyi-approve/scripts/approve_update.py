@@ -1,4 +1,4 @@
-"""Update a Ruyi explain document with an approval decision."""
+"""Update a Ruyi test document with an approval decision."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from typing import Any
 
 APPROVAL_STATUSES = ("approved", "changes-requested")
 RETURN_STAGES = ("contract", "plan", "implement", "test")
+PASSED_TEST_RESULTS = ("passed", "passed-with-notes")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
@@ -45,16 +46,15 @@ def validate_payload(payload: dict[str, Any]) -> None:
         raise ValueError("return_stage is not allowed for approved")
 
 
-
 def is_initialized(project: Path) -> bool:
-    return (project / ".ruyirc").is_file() and (project / ".ruyi" / "explain").is_dir()
+    return (project / ".ruyirc").is_file() and (project / ".ruyi" / "tests").is_dir()
 
 
-def explain_path(project: Path, payload: dict[str, Any]) -> Path:
+def test_path(project: Path, payload: dict[str, Any]) -> Path:
     return (
         project
         / ".ruyi"
-        / "explain"
+        / "tests"
         / payload["module"]
         / payload["feature"]
         / f"{payload['date']}.md"
@@ -93,7 +93,7 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str] | None:
 
 
 def render_frontmatter(data: dict[str, str]) -> str:
-    ordered = ["approval", "contract", "plan", "test"]
+    ordered = ["contract", "plan", "module", "feature", "date", "result", "approval", "return_stage"]
     lines: list[str] = []
     for key in ordered:
         if key in data:
@@ -119,6 +119,18 @@ def render_approval_section(payload: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def remove_existing_approval_section(body: str) -> str:
+    marker = "## 审批结论"
+    start = body.find(marker)
+    if start == -1:
+        return body.strip()
+
+    next_section = body.find("\n## ", start + len(marker))
+    if next_section == -1:
+        return body[:start].strip()
+    return (body[:start] + body[next_section:]).strip()
+
+
 def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[str, Any]:
     project = Path(project_path)
     validate_payload(payload)
@@ -131,12 +143,12 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
             "path": None,
         }
 
-    target = explain_path(project, payload)
+    target = test_path(project, payload)
     if not target.is_file():
         return {
             "updated": False,
-            "reason": "explain-not-found",
-            "message": "对应 explain 不存在，不能记录审批结论。",
+            "reason": "test-not-found",
+            "message": "对应 test 不存在，不能记录审批结论。",
             "path": str(target),
         }
 
@@ -146,7 +158,7 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
         return {
             "updated": False,
             "reason": "missing-frontmatter",
-            "message": "explain 缺少头部元信息，不能安全记录审批结论。",
+            "message": "test 缺少头部元信息，不能安全记录审批结论。",
             "path": str(target),
         }
 
@@ -155,7 +167,7 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
         return {
             "updated": False,
             "reason": "missing-contract-anchor",
-            "message": "explain 缺少对应 contract，不能审批。",
+            "message": "test 缺少对应 contract，不能审批。",
             "path": str(target),
         }
 
@@ -163,16 +175,18 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
         return {
             "updated": False,
             "reason": "missing-plan-anchor",
-            "message": "explain 缺少对应 plan，不能审批。",
+            "message": "test 缺少对应 plan，不能审批。",
             "path": str(target),
         }
 
-    if not frontmatter.get("test"):
+    test_result = frontmatter.get("result")
+    if test_result not in PASSED_TEST_RESULTS:
         return {
             "updated": False,
-            "reason": "missing-test-anchor",
-            "message": "explain 缺少对应 test，不能审批。",
+            "reason": "test-not-passed",
+            "message": "test 未通过，不能审批。",
             "path": str(target),
+            "result": test_result,
         }
 
     current_approval = frontmatter.get("approval")
@@ -180,23 +194,19 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
         return {
             "updated": False,
             "reason": "approval-not-pending",
-            "message": "explain 审批状态不是 pending，未重复审批。",
+            "message": "test 审批状态不是 pending，未重复审批。",
             "path": str(target),
             "approval": current_approval,
-        }
-
-    if "## 审批结论" in body:
-        return {
-            "updated": False,
-            "reason": "approval-section-exists",
-            "message": "explain 已存在审批结论章节，未重复写入。",
-            "path": str(target),
         }
 
     frontmatter["approval"] = payload["status"]
     if payload.get("return_stage"):
         frontmatter["return_stage"] = payload["return_stage"]
-    new_text = render_frontmatter(frontmatter) + "\n" + body.strip() + "\n\n" + render_approval_section(payload)
+    else:
+        frontmatter.pop("return_stage", None)
+
+    cleaned_body = remove_existing_approval_section(body)
+    new_text = render_frontmatter(frontmatter) + "\n" + cleaned_body + "\n\n" + render_approval_section(payload)
     target.write_text(new_text, encoding="utf-8")
     index_result = rebuild_index_if_available(project)
 
@@ -210,7 +220,7 @@ def update_approval(project_path: str | Path, payload: dict[str, Any]) -> dict[s
 
 
 def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
-    parser = argparse.ArgumentParser(description="Update a Ruyi explain document with an approval decision.")
+    parser = argparse.ArgumentParser(description="Update a Ruyi test document with an approval decision.")
     parser.add_argument("--project", required=True, help="Project root path")
     parser.add_argument("--module", required=True, help="Module slug")
     parser.add_argument("--feature", required=True, help="Feature slug")

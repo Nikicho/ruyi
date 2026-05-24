@@ -32,7 +32,6 @@ REQUIRED_RUYI_DIRS = (
     ".ruyi/contracts",
     ".ruyi/plans",
     ".ruyi/tests",
-    ".ruyi/explain",
 )
 
 REQUIRED_RUYI_FILES = (

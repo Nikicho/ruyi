@@ -16,7 +16,7 @@ from common import (
 )
 
 
-RUYIRC_CONTENT = """schema_version: 2
+RUYIRC_CONTENT = """schema_version: 3
 
 layers:
   - name: team
@@ -40,14 +40,13 @@ def project_readme() -> str:
 
 当项目根目录存在 `.ruyi/` 或 `.ruyirc` 时，agent 应优先使用 Ruyi 作为开发协作主流程。
 
-除非用户明确要求不用 Ruyi，否则新功能、修复、重构、测试验证、开发简报、审批和知识沉淀都应进入 Ruyi 对应阶段。
+除非用户明确要求不用 Ruyi，否则新功能、修复、重构、测试验证、审批和知识沉淀都应进入 Ruyi 对应阶段。
 
 - `spec/`：项目长期有效的事实和规范。
 - `contracts/`：每次需求的设计与验收定义。
 - `plans/`：由 contract 转化出的开发计划、测试策略和 task 拆分。
 - `tasks/`：需要跨轮次恢复实现进度时按需创建的本地 checkpoint，不提交 git。
-- `tests/`：每次 contract 对应的正式验证结果。
-- `explain/`：面向 PM 的开发简报。
+- `tests/`：每次 contract 对应的正式验证结果和审批状态。
 - `spec-candidates/`：用户延后审视或代码反推批量产出时按需创建的本地候选，不提交 git。
 """
 
@@ -177,31 +176,6 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 - `references/shared/api/conventions.md`：命名 / 分页 / 排序通用约定。
 
 Ruyi 只引用 API 权威源，不拷贝完整 Swagger / OpenAPI / Apifox 字段表。
-""",
-        "references/shared/INDEX.md": frontmatter("open", "init shared references 索引", needs_review=True) + """# Shared Spec References
-
-跨模块共享规范放在这里。
-
-建议按领域建文件夹，例如：
-
-- `api/`
-- `components/`
-- `routing/`
-- `errors/`
-""",
-        "references/modules/INDEX.md": frontmatter("open", "init module references 索引", needs_review=True) + """# Module Spec References
-
-具体模块、页面或功能规范放在这里。
-
-同一功能或公共组件只建一个文件夹，在文件夹内按主题拆分文件，例如：
-
-```text
-table/
-  simple-usage.md
-  usage.md
-  columns.md
-  internals.md
-```
 """,
     }
     if is_full_migration(facts):
@@ -467,7 +441,7 @@ def claude_activation_block() -> str:
 任何代码改动、bug 修复、新增功能、测试、审批、知识沉淀的请求，必须先加载 `using-ruyi` skill 走 Ritual：
 
 1. 检查 `.ruyi/` 状态。
-2. 仅读取 `.ruyi/INDEX.md`，不读 contract / plan / explain 正文。
+2. 仅读取 `.ruyi/INDEX.md`，不读 contract / plan / test 正文。
 3. 路由到对应子 skill 后，才读取该 feature 的具体产物。
 
 不允许跳过 `using-ruyi` 直接编辑代码或执行 shell 命令。
@@ -505,7 +479,7 @@ description: Manually load the Ruyi pipeline router (using-ruyi)
 Load the using-ruyi skill and execute its Ritual:
 
 1. Detect `.ruyi/` state.
-2. Read `.ruyi/INDEX.md` only. Do NOT read contract / plan / explain bodies.
+2. Read `.ruyi/INDEX.md` only. Do NOT read contract / plan / test bodies.
 3. List up to 5 active feature candidates from INDEX.
 4. Route my next message to the correct sub-skill.
 5. Only after routing to a specific feature, read that feature's latest contract.
@@ -518,7 +492,7 @@ def ruyi_hook_command() -> str:
     reminder = (
         "<system-reminder>This project uses Ruyi. You MUST load the using-ruyi skill "
         "and execute its Ritual before any code edit, file write, shell command, or stage execution. "
-        "Read .ruyi/INDEX.md only before routing; do not scan contract / plan / explain bodies. "
+        "Read .ruyi/INDEX.md only before routing; do not scan contract / plan / test bodies. "
         "Failure to do so violates the Ruyi main flow.</system-reminder>"
     )
     return f"sh -c \"[ -d .ruyi ] || [ -f .ruyirc ]\" && echo '{reminder}' || true"

@@ -1,6 +1,6 @@
 ---
 name: ruyi-init
-description: Use when an existing frontend project needs to be initialized for Ruyi, including mature brownfield projects. Common triggers: "接入Ruyi", "初始化Ruyi", "启用Ruyi", "init Ruyi", "setup Ruyi". Creates .ruyi, .ruyirc, confidence-marked project spec anchors, split baselines, references indexes, docs-registry/interview-bank for full migration, INDEX, CLAUDE.md reminder, Claude Code hook, and /ruyi fallback command.
+description: Use when an existing frontend project needs to be initialized for Ruyi, including mature brownfield projects. Common triggers: "接入Ruyi", "初始化Ruyi", "启用Ruyi", "init Ruyi", "setup Ruyi". Creates .ruyi, .ruyirc, confidence-marked project spec anchors, split baselines, spec INDEX, docs-registry/interview-bank for full migration, INDEX, CLAUDE.md reminder, Claude Code hook, and /ruyi fallback command.
 ---
 
 # Ruyi Init
@@ -42,9 +42,9 @@ description: Use when an existing frontend project needs to be initialized for R
    - 完整迁移：蒸馏现有文档并澄清关键问题，建立项目知识基线。
 4. 读取项目事实；完整迁移时同时读取候选文档源和 brownfield 必问问卷。
 5. 生成 `.ruyirc`。
-6. 生成 `.ruyi/spec/` 基础锚点、拆分后的 baseline、`api.md` 和 `references/shared|modules` 索引；spec 只放长期规则、索引和跨模块约束。
+6. 生成 `.ruyi/spec/` 基础锚点、拆分后的 baseline、`api.md`、`references/shared/`、`references/modules/` 和 `.ruyi/spec/INDEX.md`；spec 只放长期规则、索引和跨模块约束。
 7. 完整迁移时生成 `docs-registry.md`、`interview-bank.md`，并把蒸馏/代码反推的模块业务事实写入 `.ruyi/contracts/<module>/_baseline/current.md` 或 `.ruyi/contracts/<module>/<feature>/baseline.md`。
-8. 创建正式共享目录 `contracts / plans / tests / explain`；`tasks / spec-candidates` 仅在后续本地需要时按需创建。
+8. 创建正式共享目录 `contracts / plans / tests`；`tasks / spec-candidates` 仅在后续本地需要时按需创建。
 9. 生成 `.ruyi/project-actions.md`。
 10. 生成 `.ruyi/INDEX.md` 新格式占位。
 11. 写入或合并 `.claude/settings.json` 的入口保护 hook。
@@ -178,12 +178,9 @@ description: Use when an existing frontend project needs to be initialized for R
 - `.ruyi/spec/coding-baseline.md`
 - `.ruyi/spec/open-questions.md`
 - `.ruyi/spec/api.md`
-- `.ruyi/spec/references/shared/INDEX.md`
-- `.ruyi/spec/references/modules/INDEX.md`
 - `.ruyi/contracts/`
 - `.ruyi/plans/`
 - `.ruyi/tests/`
-- `.ruyi/explain/`
 - `.ruyi/project-actions.md`
 - `.claude/commands/ruyi.md`
 
@@ -203,7 +200,7 @@ description: Use when an existing frontend project needs to be initialized for R
 
 - 覆盖已有文件。
 - 自动补齐不完整初始化。
-- 批量生成历史交付 contract / plan / explain；完整迁移只允许生成当前业务事实 baseline contract。
+- 批量生成历史交付 contract / plan / test；完整迁移只允许生成当前业务事实 baseline contract。
 - 把陈旧或低质量文档入口录入 docs-registry。
 - 把 distilled / claimed 内容当成 observed 事实。
 - 读取页面文件正文来推断业务。

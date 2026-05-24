@@ -11,6 +11,8 @@ skills/*/scripts/tests/
 docs/ruyi-skill-authoring.md
 docs/superpowers-origin.md
 design/
+.ruyi/explain/**
+.ruyi/workspace/**
 .ruyi/spec-candidates/**
 .ruyi/spec-archive/**
 .ruyi/spec-patches/**

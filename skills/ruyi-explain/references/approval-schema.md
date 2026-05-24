@@ -1,42 +1,42 @@
 ﻿# Approval Schema
 
-## 1. 对象定位
+## 1. 定位
 
-`approval` 是 PM 对某次 explain 的审批结论。
+`approval` 是 PM 对某次 test 验证结果和交付可接受性的审批结论。
 
-首版不新增独立目录，审批结论直接写回对应 explain：
+schema v3 不新增独立审批目录，审批结论直接写回对应 test：
 
-- 更新 explain 头部元信息中的 `approval`。
-- 非 `approved` 状态同步写入 `return_stage`，便于主流程识别退回阶段。
-- 在 explain 正文末尾追加 `## 审批结论`。
+- 更新 test 头部元信息中的 `approval`。
+- 必要时写入 `return_stage`。
+- 在 test 正文末尾追加或替换 `## 审批结论`。
 
-## 2. 状态枚举
+## 2. Frontmatter
 
-允许的审批状态：
+```yaml
+approval: pending | approved | changes-requested
+return_stage: contract | plan | implement | test
+```
 
-- `pending`：待审批，只能由 explain 生成阶段写入。
+- `pending`：由 `ruyi-test` 创建，等待审批。
 - `approved`：接受交付，可进入知识沉淀判断。
-- `changes-requested`：需要修改，必须返回 contract、plan、implement 或 test。
+- `changes-requested`：需要修改，必须带 `return_stage`。
 
-## 3. 正文结构
+## 3. 审批章节
 
-审批后在 explain 末尾追加：
+审批后在 test 末尾追加：
 
 ```md
 ## 审批结论
 
-- 审批状态：[status]
-- 审批说明：[reason]
-- 返回阶段：[contract|plan|implement|test|无需返回。]
-- 后续动作：[follow-up]
+- 审批状态：approved | changes-requested
+- 审批说明：...
+- 返回阶段：无需返回。 | contract | plan | implement | test
 ```
 
-`后续动作` 只在不阻碍当前交付通过、但仍需记录跟进事项时出现。阻碍交付的条件应使用 `changes-requested`。
+## 4. 门禁
 
-## 4. 规则
-
-- 没有 explain，不允许审批。
-- explain 必须锚定 contract、plan 和 test。
-- 只有 `approval: pending` 的 explain 可以被审批。
-- 非 `approved` 状态必须写明返回阶段。
-- 审批不修改 contract、plan，不补写 test，不直接更新 spec。
+- 没有 test，不允许审批。
+- test 必须锚定 contract 和 plan；tiny 可按当前流程约定省略 plan。
+- test 的 `result` 必须是 `passed` 或 `passed-with-notes`。
+- 只有 `approval: pending` 的 test 可以被审批。
+- `changes-requested` 必须明确返回阶段。

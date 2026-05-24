@@ -83,11 +83,11 @@ def is_initialized(project: Path) -> bool:
     return (project / ".ruyirc").is_file() and (project / ".ruyi" / "spec").is_dir()
 
 
-def explain_path(project: Path, payload: dict[str, Any]) -> Path:
+def test_path(project: Path, payload: dict[str, Any]) -> Path:
     return (
         project
         / ".ruyi"
-        / "explain"
+        / "tests"
         / payload["module"]
         / payload["feature"]
         / f"{payload['date']}.md"
@@ -126,12 +126,12 @@ def bullet_list(items: list[str]) -> str:
 
 
 def render_candidate(payload: dict[str, Any]) -> str:
-    explain = f".ruyi/explain/{payload['module']}/{payload['feature']}/{payload['date']}.md"
+    test = f".ruyi/tests/{payload['module']}/{payload['feature']}/{payload['date']}.md"
     excluded = as_list(payload.get("excluded")) or ["暂无。"]
     open_questions = as_list(payload.get("open_questions")) or ["暂无。"]
 
     return f"""---
-source_explain: {explain}
+source_test: {test}
 module: {payload["module"]}
 feature: {payload["feature"]}
 date: {payload["date"]}
@@ -177,34 +177,43 @@ def create_candidate(project_path: str | Path, payload: dict[str, Any]) -> dict[
             "path": None,
         }
 
-    explain = explain_path(project, payload)
-    if not explain.is_file():
+    test = test_path(project, payload)
+    if not test.is_file():
         return {
             "created": False,
-            "reason": "explain-not-found",
-            "message": "对应 explain 不存在，不能创建 spec candidate。",
+            "reason": "test-not-found",
+            "message": "对应 test 不存在，不能创建 spec candidate。",
             "path": None,
-            "explain": str(explain),
+            "test": str(test),
         }
 
-    frontmatter = parse_frontmatter(explain.read_text(encoding="utf-8"))
+    frontmatter = parse_frontmatter(test.read_text(encoding="utf-8"))
     approval = frontmatter.get("approval") if frontmatter else None
     missing_anchors = [
-        key for key in ("contract", "plan", "test") if not frontmatter or not frontmatter.get(key)
+        key for key in ("contract", "plan") if not frontmatter or not frontmatter.get(key)
     ]
     if missing_anchors:
         return {
             "created": False,
-            "reason": "explain-missing-anchors",
-            "message": "explain 缺少 contract、plan 或 test 锚点，不能创建 spec candidate。",
+            "reason": "test-missing-anchors",
+            "message": "test 缺少 contract 或 plan 锚点，不能创建 spec candidate。",
             "path": None,
             "missing": missing_anchors,
+        }
+    test_result = frontmatter.get("result")
+    if test_result not in ("passed", "passed-with-notes"):
+        return {
+            "created": False,
+            "reason": "test-not-passed",
+            "message": "test 未通过，不能创建 spec candidate。",
+            "path": None,
+            "result": test_result,
         }
     if approval != "approved":
         return {
             "created": False,
-            "reason": "approval-not-approved",
-            "message": "explain 未审批通过，不能创建 spec candidate。",
+            "reason": "test-not-approved",
+            "message": "test 未审批通过，不能创建 spec candidate。",
             "path": None,
             "approval": approval,
         }

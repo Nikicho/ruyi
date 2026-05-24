@@ -103,7 +103,7 @@ frontmatter 允许包含：
 ## 6. 分档规则
 
 - `tiny` 必须仍然有 contract、implement 和 test 证据。
-- `tiny` 跳过 plan、explain 和 approve；如后续发现范围扩大，必须升级为 `standard` 并补 plan。
+- `tiny` 跳过 plan 和 approve；如后续发现范围扩大，必须升级为 `standard` 并补 plan。
 - `tiny` 不允许包含业务规则变化，不允许用于 `fix` 类型。
 - `standard` 默认走完整主流程。
 - `large` 必须进入 plan，且 plan 应拆分多个 task。
@@ -120,3 +120,4 @@ frontmatter 允许包含：
 - 未确认的 `draft` contract 不进入 plan。
 - 未初始化项目，不正式创建或维护 contract。
 - `contract` 不能整体升级为 `spec`，只能作为提炼来源。
+

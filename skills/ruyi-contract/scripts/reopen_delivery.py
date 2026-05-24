@@ -82,12 +82,12 @@ def reopen_delivery(project_path: str | Path, payload: dict[str, Any]) -> dict[s
     project = Path(project_path)
     validate_payload(payload)
     contract = artifact_path(project, "contracts", payload)
-    explain = artifact_path(project, "explain", payload)
-    if not contract.is_file() or not explain.is_file():
+    test = artifact_path(project, "tests", payload)
+    if not contract.is_file() or not test.is_file():
         return {"updated": False, "reason": "approved-delivery-not-found", "path": str(contract)}
     contract_text = contract.read_text(encoding="utf-8")
-    explain_text = explain.read_text(encoding="utf-8")
-    if parse_frontmatter(contract_text).get("status") != "confirmed" or parse_frontmatter(explain_text).get("approval") != "approved":
+    test_text = test.read_text(encoding="utf-8")
+    if parse_frontmatter(contract_text).get("status") != "confirmed" or parse_frontmatter(test_text).get("approval") != "approved":
         return {"updated": False, "reason": "delivery-not-approved", "path": str(contract)}
 
     changed_on = date.today().isoformat()
@@ -102,15 +102,13 @@ def reopen_delivery(project_path: str | Path, payload: dict[str, Any]) -> dict[s
         plan.write_text(append_record(plan_text, "状态变更记录", record), encoding="utf-8")
         updated.append(str(plan.relative_to(project).as_posix()))
 
-    test = artifact_path(project, "tests", payload)
     if test.is_file():
-        test.write_text(set_frontmatter_value(test.read_text(encoding="utf-8"), "result", "pending"), encoding="utf-8")
+        test_text = set_frontmatter_value(test.read_text(encoding="utf-8"), "result", "pending")
+        test_text = set_frontmatter_value(test_text, "approval", "pending")
+        test_text = remove_frontmatter_values(test_text, ("return_stage", "condition"))
+        test.write_text(append_record(test_text, "状态变更记录", record), encoding="utf-8")
         updated.append(str(test.relative_to(project).as_posix()))
 
-    explain_text = set_frontmatter_value(explain_text, "approval", "pending")
-    explain_text = remove_frontmatter_values(explain_text, ("return_stage", "condition"))
-    explain.write_text(append_record(explain_text, "状态变更记录", record), encoding="utf-8")
-    updated.append(str(explain.relative_to(project).as_posix()))
     return {
         "updated": True,
         "reason": None,

@@ -1,65 +1,7 @@
 ﻿# Explain Schema
 
-## 1. 对象定位
+`explain` 已在 Ruyi schema v3 主流程中退役。
 
-`explain` 是某次需求交付结果的开发简报，面向 PM 审批前阅读。
+正式交付不再创建 `.ruyi/explain/`。验证摘要和审批结论由 `.ruyi/tests/<module>/<feature>/<date>.md` 承载。
 
-它不是审批结果本身，也不是代码 diff 摘要，也不替代 implement 阶段的 code review。
-
-## 2. 路径规则
-
-路径格式：
-
-```text
-explain/<module>/<feature>/<contract-date>.md
-```
-
-## 3. 头部元信息
-
-建议包含：
-
-- 审批状态
-- 对应 Contract
-- 对应 Plan
-- 对应 Test
-
-审批状态可以在审批动作之后更新。
-
-## 4. 正文结构
-
-```md
-# Explain：[功能名称]
-
-## 交付摘要
-
-- 完成：...
-- 需求对照：...
-- 代码质量：...
-- 质量依据：...
-
-## 验证结论
-
-- 证据文件：`.ruyi/tests/...`
-- ...
-
-## 风险与后续 # 仅有风险或必要备注时出现
-
-- 风险：...
-- 备注：...
-```
-
-## 5. 风险与后续规则
-
-仅在影响审批判断时写风险或备注。允许简要说明技术债务、架构演进、兼容性限制或关键取舍。
-
-不应单独展开技术报告、大量代码变更清单、逐文件 diff 或实现过程流水账。
-
-## 6. 硬门禁
-
-- 没有需求定义锚点，不生成 explain。
-- 没有 plan，不生成 explain。
-- 没有 `test` 验证结果，不进入 explain 正式产出。
-- test 结果为 `failed` 时，不进入 explain 正式产出。
-- 交付摘要中的代码质量结论必须显式写出依据，至少指向 plan、task 自检、review 结论或实际代码事实之一。
-- explain 不能整体升级为 `spec`，只能作为提炼来源。
-- 审批结论只能由 approve 阶段写入。
+旧项目中的 `.ruyi/explain/` 由 `ruyi-upgrade` 迁移到 test 后删除。

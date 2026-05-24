@@ -19,7 +19,7 @@ Ruyi 仓库/
     ├── ruyi-plan/
     ├── ruyi-implement/
     ├── ruyi-test/
-    ├── ruyi-explain/
+    ├── ruyi-explain/      # deprecated compatibility entry
     ├── ruyi-approve/
     ├── ruyi-upgrade/
     ├── ruyi-spec-discover/
@@ -33,7 +33,7 @@ Agent skills 目录/
 ├── ruyi-plan/
 ├── ruyi-implement/
 ├── ruyi-test/
-├── ruyi-explain/
+├── ruyi-explain/      # deprecated compatibility entry
 ├── ruyi-approve/
 ├── ruyi-upgrade/
 ├── ruyi-spec-discover/
@@ -127,7 +127,7 @@ ruyi-contract
 ruyi-plan
 ruyi-implement
 ruyi-test
-ruyi-explain
+ruyi-explain  # deprecated compatibility entry
 ruyi-approve
 ruyi-upgrade
 ruyi-spec-discover
@@ -156,7 +156,7 @@ git pull
 请使用 using-ruyi 继续当前项目工作；如果项目 schema 落后，先运行 ruyi-upgrade。
 ```
 
-`ruyi-upgrade` 会自动迁移 `.ruyirc`、本地忽略规则和 INDEX 等机械结构。检测到旧 `workspace / spec-archive / spec-patches` 目录时，会先询问是否删除；不会自动重解释 contract 或正式 spec 的业务内容。
+`ruyi-upgrade` 会自动迁移 `.ruyirc`、本地忽略规则、INDEX、旧 explain 审批、旧 frontend baseline 和旧二级 spec INDEX。检测到旧 `explain / workspace / spec-archive / spec-patches` 目录时，会先询问是否删除；删除确认完成后才标记为 schema v3。
 
 ## 卸载
 

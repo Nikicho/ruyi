@@ -26,13 +26,14 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - plan 必须覆盖 contract 中的测试用例。
 - plan 必须说明 task 拆分、实施顺序、写入范围和完成条件。
 - 发现需求边界不清时返回 `ruyi-contract`，不在 plan 里隐式扩展需求。
+- 读取项目规范时，先读 `.ruyi/spec/INDEX.md`，再按索引读取相关 spec。
 - 并行开发只在 task 边界清楚时建议，不强制使用多 agent。
 
 ## 4. 执行步骤
 
 1. 检查项目是否已初始化。
 2. 读取 contract。
-3. 读取 project spec 和可用 team spec。
+3. 读取 `.ruyi/spec/INDEX.md`，并按索引读取相关 project spec 和可用 team spec。
 4. 读取 `references/plan-schema.md`。
 5. 读取 `references/planning-discipline.md`。
 6. 将自然语言测试用例映射为验证策略。
@@ -81,7 +82,7 @@ python <skills-dir>/ruyi-plan/scripts/plan_create.py --project <project> --modul
 - 写入 `.ruyi/plans/<module>/<feature>/<contract-date>.md`。
 - 不覆盖已有 plan。
 - 不生成 task。
-- 不修改 contract、test、explain 或 spec。
+- 不修改 contract、test 或 spec。
 
 脚本只负责落盘，不替代 agent 的实施设计判断。
 

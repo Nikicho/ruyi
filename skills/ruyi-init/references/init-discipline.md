@@ -28,7 +28,8 @@ baseline contract 的事实来源可以是历史文档蒸馏，也可以是现�
 - 不覆盖已有文件。
 - 初始化必须部署入口保护：INDEX 占位、CLAUDE.md 持久提示、Claude Code hook、`/ruyi` 手动兜底命令。
 - 初始化必须创建 `.ruyi/spec/api.md`，但不读取项目代码推断 API 列表。
-- 初始化必须创建 `.ruyi/spec/references/shared/INDEX.md` 和 `.ruyi/spec/references/modules/INDEX.md`。
+- 初始化必须创建 `.ruyi/spec/INDEX.md` 作为唯一 spec 检索入口。
+- 初始化不得创建 `.ruyi/spec/references/shared/INDEX.md` 或 `.ruyi/spec/references/modules/INDEX.md`。
 - 初始化必须为 spec 内容写入 confidence，区分 `observed / distilled / claimed / open / confirmed_by_user`。
 - 快速开始不生成 `docs-registry.md` 和 `interview-bank.md`。
 - 完整迁移必须生成 `docs-registry.md`、`interview-bank.md` 与经确认的 baseline contract；不保留一次性评估笔记目录。

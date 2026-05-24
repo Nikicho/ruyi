@@ -22,6 +22,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 明确验证对象是什么。
 - 优先使用项目已有测试方式。
 - UI 相关需求优先使用 fast-browser CLI。
+- 需要读取测试或验收相关项目规范时，先读 `.ruyi/spec/INDEX.md`，再按索引读取相关 spec。
 - 结果收口前遵守 `references/verification-discipline.md`。
 - fast-browser 使用遵守 `references/fast-browser-testing.md`。
 

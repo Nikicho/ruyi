@@ -23,7 +23,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 
 ## 3. 执行原则
 
-- 先读取 project spec 与可用 team spec。
+- 先读取 `.ruyi/spec/INDEX.md`，再按索引读取相关 project spec 与可用 team spec。
 - 以 contract 为需求边界，以 plan 为实施边界。
 - 轻量维护模式以维护目标和写入边界为实施边界，以现有 spec 为约束来源。
 - `tiny` contract 可以跳过 plan/checkpoint，但如果实际改动超过 3 个文件、新增 hook/组件或出现业务规则变化，必须升级为 `standard` 并返回 `ruyi-plan`。
@@ -38,7 +38,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 
 1. 检查项目是否已初始化。
 2. 读取 contract 和 plan。
-3. 读取 project spec 和可用 team spec。
+3. 读取 `.ruyi/spec/INDEX.md`，并按索引读取本次相关 project spec 和可用 team spec。
 4. 读取 `references/implementation-discipline.md` 和 `references/code-review-discipline.md`。
 5. 判断本次实现是否需要本地 checkpoint；需要时在首次修改源码前创建，并在完成文件组、运行验证或准备结束回复前更新。
 6. 实现 plan 范围内的最小必要改动。
@@ -50,7 +50,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 
 1. 检查项目是否已初始化。
 2. 明确维护目标、写入边界和不改变业务行为的判断。
-3. 读取相关 project spec 和可用 team spec。
+3. 读取 `.ruyi/spec/INDEX.md`，并按索引读取相关 project spec 和可用 team spec。
 4. 读取 `references/implementation-discipline.md` 和 `references/code-review-discipline.md`。
 5. 在写入边界内完成最小代码优化或代码微重构。
 6. 运行可行的局部验证。
@@ -64,7 +64,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 代码自检和代码质量结论。
 - 可进入测试验证阶段的实现结果。
 - 轻量维护模式不生成 checkpoint；输出维护目标、写入边界、验证结果和可沉淀规范判断。
-- 团队需要复用的代码质量、自检与风险结论必须进入正式 `test` 或 `explain`，不得只留在本地 checkpoint。
+- 团队需要复用的代码质量、自检与风险结论必须进入正式 `test`、spec candidate 或 spec，不得只留在本地 checkpoint。
 
 ## 6. 脚本调用
 
@@ -82,7 +82,7 @@ python <skills-dir>/ruyi-implement/scripts/task_create.py --project <project> --
 - 懒创建 `.ruyi/tasks/` 并按 `task-01.md`、`task-02.md` 递增创建 checkpoint。
 - 状态仅允许 `pending / in-progress / done`。
 - 不生成业务代码。
-- 不修改 contract、plan、test、explain 或 spec。
+- 不修改 contract、plan、test 或 spec。
 - 不重建 `.ruyi/INDEX.md`。
 
 执行期间更新当前 checkpoint：

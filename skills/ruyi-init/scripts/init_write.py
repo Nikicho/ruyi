@@ -100,6 +100,8 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 本目录只放长期有效的项目事实和项目规则。
 
+读取项目规范时必须先读本文件，再按链接读取相关顶层 baseline、`references/shared/` 或 `references/modules/` 下的细分规范。
+
 ## 核心文件
 
 - `project-overview.md`：项目目标、技术栈和业务概况。
@@ -114,6 +116,8 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 
 - `references/shared/`：跨模块共享规范。
 - `references/modules/`：具体模块或功能的规范。
+
+`references/` 不维护二级 INDEX；本文件是唯一正式 spec 索引。
 """,
         "project-overview.md": frontmatter("observed", "init 项目事实读取") + f"""# 项目概览
 
@@ -142,6 +146,10 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 ## 变更前后自检
 
 待补充。
+
+## 相关细分规范
+
+待补充。这里应链接到 `references/shared/` 或 `references/modules/` 下的开发过程规范。
 """,
         "coding-baseline.md": frontmatter("open", "init 占位", needs_review=True) + """# 代码编写基线
 
@@ -152,6 +160,10 @@ def spec_contents(facts: dict[str, Any]) -> dict[str, str]:
 ## 样式与交互
 
 待补充。
+
+## 相关细分规范
+
+待补充。这里应链接到 `references/shared/` 或 `references/modules/` 下的代码编写规范。
 """,
         "testing-baseline.md": frontmatter("observed" if tests else "open", "init package.json 检测", needs_review=not bool(tests)) + f"""# 测试基线
 

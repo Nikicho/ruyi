@@ -31,24 +31,26 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 需求设计过程遵守 `references/contract-discipline.md`。
 - 修复类需求必要时先遵守 `references/debugging-discipline.md`。
 - `fix / refactor` 是 contract 的需求类型，不是独立 Ruyi skill。
+- 需要读取项目规范时，先读 `.ruyi/spec/INDEX.md`，再按索引读取相关 spec；baseline contract 只作为当前业务事实背景，不替代本次变更 contract。
 
 ## 4. 执行步骤
 
 1. 检查项目是否已初始化。
 2. 读取 `references/contract-schema.md`。
 3. 读取 `references/contract-discipline.md`。
-4. 如果是修复类需求，先读取并执行 `references/debugging-discipline.md`。
-5. 判断模块和功能命名，优先贴近项目现有模块目录。
-6. 澄清业务目标、用户故事、范围边界、验收标准。
-7. 判断本次是否涉及接口；涉及时收集 `## 接口范围` 信息，只记录接口路径、方法、类型、来源和必要临时定义，不抄完整 API 文档。
-8. 基于验收标准 brainstorm 自然语言测试用例。每条测试用例必须：
+4. 读取 `.ruyi/spec/INDEX.md`，并按索引读取本次相关 spec 或 baseline contract。
+5. 如果是修复类需求，先读取并执行 `references/debugging-discipline.md`。
+6. 判断模块和功能命名，优先贴近项目现有模块目录。
+7. 澄清业务目标、用户故事、范围边界、验收标准。
+8. 判断本次是否涉及接口；涉及时收集 `## 接口范围` 信息，只记录接口路径、方法、类型、来源和必要临时定义，不抄完整 API 文档。
+9. 基于验收标准 brainstorm 自然语言测试用例。每条测试用例必须：
    - 能映射回至少一条验收标准。
    - 描述具体场景，不是抽象规则。
    - 覆盖正常路径、边界、异常三类；tiny 可按实际简化但不能为空。
    一次只问一个测试场景缺口，不一次性猜完。
-9. 判断是新建日期 contract，还是修订当前 contract。
-10. 用户确认后，按路径写入或更新 contract。
-11. 如 contract 需要拆分或需要实施设计，引导进入 `ruyi-plan`。
+10. 判断是新建日期 contract，还是修订当前 contract。
+11. 用户确认后，按路径写入或更新 contract。
+12. 如 contract 需要拆分或需要实施设计，引导进入 `ruyi-plan`。
 
 ## 5. 修订模式
 
@@ -59,7 +61,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
    - 类型 A：原地修订相关字段，追加 `## 修订记录`。
    - 类型 B：原地修订相关字段，追加 `## 修订记录`，然后提示进入 `ruyi-plan` 重评模式。
    - 类型 C：新建日期 contract，旧 contract frontmatter 加 `superseded_by`。
-   - 类型 D：重开同一 contract，写入 `status: reopened` 和 `## 返工记录`；按返回阶段重置当前 plan/test/explain 状态，不新建 contract。
+   - 类型 D：重开同一 contract，写入 `status: reopened` 和 `## 返工记录`；按返回阶段重置当前 plan/test 状态，不新建 contract。
 3. 未确认分类时，不允许落盘修订。
 4. 修订后必须刷新或提示刷新 `.ruyi/INDEX.md`。
 

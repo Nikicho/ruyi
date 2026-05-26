@@ -2,48 +2,62 @@
 
 # Ruyi 如意
 
-> A frontend dev contract framework for AI coding agents.
+> A repo-native collaboration framework for AI coding agents.
 
-Ruyi 是一套面向前端项目的 AI 协作开发规范。它用 repo-native 的文档结构约束 agent：先澄清需求，再制定计划，再实现、验证、审批，最后按需沉淀长期规范。
+Ruyi 是一套面向 AI 协作开发的规范框架。它让 agent 在项目仓库里按固定流程工作：先澄清需求，再制定计划，再实现、验证、审批，最后把有长期价值的经验沉淀成可提交的项目规范。
 
-它不是 CLI 产品，也不是项目管理系统。日常使用时，用户只需要用自然语言和 agent 对话；Ruyi 通过 skills 和项目内 `.ruyi/` 文档让 agent 知道当前该做什么、不该跳过什么。
+Ruyi 不是 CLI 产品，也不是项目管理系统。用户日常只需要用自然语言和 agent 对话；Ruyi 通过 skills 和项目内 `.ruyi/` 文档，让 agent 知道当前该读什么、该做什么、不能跳过什么。
 
 ## 适合什么场景
 
-Ruyi 适合已经开始用 AI agent 做真实开发的前端团队，尤其是这些问题已经出现时：
+Ruyi 适合已经开始用 AI agent 做真实开发的团队，尤其是这些问题已经出现时：
 
 - agent 拿一句口头需求就直接改代码。
 - 长对话里漏读项目规则、漏跑测试、忘记验收标准。
-- 需求、计划、验证和审批都散落在聊天记录里，团队成员无法复用。
+- 需求、计划、验证和审批散落在聊天记录里，团队成员无法复用。
 - 成熟项目想接入 AI 协作流程，但不想补写大量历史 contract。
 - 项目经验需要沉淀成可提交、可版本化的规范，而不是只留在某次会话里。
 
-Ruyi 的核心资产是项目里的 `.ruyi/` 文档。它们应该和业务代码一起提交，让团队和 agent 都能读取同一份事实。
+Ruyi 的核心资产是项目里的 `.ruyi/` 文档。它们应该和业务代码一起提交，让团队成员和 agent 都读取同一份项目事实。
+
+## 安装
+
+把本仓库 `skills/` 目录里的内容复制到 code agent 可发现的 skills 目录。
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
+Copy-Item -Recurse -Force ".\skills\*" "$env:USERPROFILE\.agents\skills\"
+```
+
+本地开发 Ruyi 时，也可以为每个 skill 建目录联接，避免复制后忘记同步。
+
+```powershell
+cmd /c mklink /J "%USERPROFILE%\.agents\skills\using-ruyi" "D:\AIWorks\ruyi\skills\using-ruyi"
+cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\skills\ruyi-init"
+```
+
+其他阶段 skill 按同样方式链接。安装后重启 code agent。
 
 ## 最快开始
 
-1. 把本仓库 `skills/` 里的内容安装到 code agent 可发现的 skills 目录。
-2. 在目标前端项目里对 agent 说：“把这个项目接入 Ruyi。”
-3. agent 会让你选择接入方式：快速开始，或完整迁移。
-4. 初始化完成后，继续用自然语言提需求，例如：“新增订单关键词搜索。”
-5. 每个需求完成后，用“这个交付通过。”确认审批；需要沉淀经验时，再说“把这次经验沉淀一下。”
+在目标项目里对 agent 说：
 
-日常入口永远是 `using-ruyi`。它负责判断当前项目状态和用户意图，再路由到初始化、需求澄清、计划、实现、测试、审批或规范沉淀。
+```text
+把这个项目接入 Ruyi。
+```
 
-## 接入方式
+agent 应先进入 `using-ruyi`，判断项目是否已经初始化。如果项目还没有 `.ruyi/`，会进入 `ruyi-init` 并让你选择接入方式：
 
-成熟项目不需要倒灌历史 contract。Ruyi 从接入后的下一次变更开始形成正式 contract。
+- 快速开始：创建最小 `.ruyi/` 结构、入口保护和基础项目规范，不蒸馏历史文档。
+- 完整迁移：读取 agent 可访问的历史文档和当前代码观察，建立项目知识基线。
 
-接入方式只有两种：
+初始化完成后，继续用自然语言提需求：
 
-- 快速开始：创建最小 `.ruyi/` 结构、入口保护和基础 spec。历史知识后续按需补。
-- 完整迁移：蒸馏 agent 可读取的历史文档和当前代码观察，建立项目知识基线；当前业务事实进入 baseline contract，长期规则进入 `.ruyi/spec/`。
+```text
+新增订单关键词搜索。
+```
 
-完整迁移读取外部文档时：
-
-- 有 `agent-browser`、`fast-browser`、`bb-browser` 等浏览器工具时，可以用浏览器工具查看外部文档后蒸馏。
-- 没有浏览器工具时，用户应提供 Markdown 或纯文本等 agent 易读文件。
-- 本地导出文件只作为蒸馏输入，不写入可提交 spec，也不保存不可复用的本地路径。
+Ruyi 会把 agent 路由到对应阶段，而不是让 agent 直接改代码。
 
 ## 日常流程
 
@@ -60,32 +74,56 @@ contract -> plan -> implement -> test -> approve
 - `implement`：按 plan 修改代码，并在长任务中按需维护本地 checkpoint。
 - `test`：记录验证结论、关键证据、风险和审批状态。
 - `approve`：用户确认交付后，更新 test 中的 approval。
-- `spec`：只有当本次经验具备长期价值时，才更新正式规范；延后审视的候选默认留本地。
+- `spec`：只有当本次经验具备长期价值时，才更新正式规范。
 
 Ruyi 的目标不是增加文档负担，而是让 agent 不能绕过关键判断：需求是否清楚、方案是否存在、验证是否有证据、交付是否被确认。
 
-## 常用说法
+## 成熟项目接入
 
-安装和初始化：
+成熟项目不需要倒灌历史 contract。Ruyi 从接入后的下一次变更开始形成正式 contract。
 
-- “把这个 Vue 项目接入 Ruyi。”
-- “快速开始接入。”
-- “完整迁移接入，先帮我蒸馏这些项目文档。”
+接入方式只有两种：
 
-开发需求：
+- 快速开始：只启用 Ruyi 流程和基础项目画像，历史知识在具体需求中逐步补充。
+- 完整迁移：蒸馏现有业务文档和当前代码观察；当前业务事实进入 baseline contract，长期规则进入 `.ruyi/spec/`。
 
-- “新增订单关键词搜索。”
-- “修复订单列表筛选后分页不重置的问题。”
-- “优化这个组件的渲染性能。”
-- “做一次小重构，保持行为不变。”
+完整迁移读取外部文档时：
 
-流程推进：
+- 有 `agent-browser`、`fast-browser`、`bb-browser` 等浏览器工具时，可以让 agent 用浏览器工具查看外部文档后蒸馏。
+- 没有浏览器工具时，用户应提供 Markdown 或纯文本等 agent 易读文件。
+- 本地导出文件只作为蒸馏输入，不写入可提交 spec，也不保存不可复用的本地路径。
 
-- “继续。”
-- “这个 contract 可以。”
-- “按这个 plan 开始实现。”
-- “这个交付通过。”
-- “把这次经验沉淀一下。”
+## 三层知识模型
+
+Ruyi 有三层，不应该混在一起：
+
+- `skills/`：Ruyi 本体，提供入口路由、阶段规则、产物结构和辅助脚本。
+- `.ruyi/`：项目级知识层，放在业务项目根目录，记录当前项目事实、项目规范、需求、计划、测试和审批。
+- `ruyi-team/`：团队级知识层，可选存在，用于沉淀跨项目复用的团队规范、工作流、测试方法论、审批规则和公共约束。
+
+项目初始化时主要读取当前项目，不要求存在 `ruyi-team/`。团队层信息是在协作开发过程中由 agent 按需读取，用来和项目层规范合并判断。
+
+推荐团队层结构：
+
+```text
+ruyi-team/
+├── spec/
+├── actions.md
+└── README.md
+```
+
+其中：
+
+- `spec/`：团队长期有效规范，例如前端工程规范、测试要求、组件设计原则、交互约束。
+- `actions.md`：团队特殊动作，例如测试报告提交位置、审批系统地址、发布前检查方式。
+- `README.md`：团队层说明，帮助 agent 判断这份团队知识适用范围。
+
+团队层和项目层的边界：
+
+- 项目层描述当前项目的具体事实。
+- 团队层描述跨项目通用约束。
+- 项目经验先沉淀到项目层，确认具备跨项目价值后，再提升到团队层。
+- 当团队层与项目层存在同类规范时，agent 应合并判断；冲突时不能简单覆盖，应整理为待确认问题。
 
 ## 项目里会生成什么
 
@@ -154,25 +192,6 @@ Ruyi 里的 spec 只保存长期有效的项目事实和规则，不保存一次
 - 可长期复用的代码约束、组件约定、业务规则进入 `.ruyi/spec/`。
 - 尚未确认的问题进入 `spec/open-questions.md`，不要塞进交付说明里。
 
-## 团队层
-
-Ruyi 支持可选的团队层知识：
-
-```text
-ruyi-team/
-├── spec/
-├── actions.md
-└── README.md
-```
-
-团队层用于沉淀跨项目复用的规范、测试方法论、审批规则和公共约束。项目初始化时不强制读取团队层；协作开发过程中，agent 可按需读取团队层，再和项目层规范合并判断。
-
-边界原则：
-
-- 项目层描述当前项目的具体事实。
-- 团队层描述跨项目通用约束。
-- 项目经验先沉淀到项目层，确认具备跨项目价值后，再提升到团队层。
-
 ## API 文档归位
 
 Ruyi 不维护后端 API 文档本体，只维护三类信息：
@@ -183,23 +202,28 @@ Ruyi 不维护后端 API 文档本体，只维护三类信息：
 
 完整请求响应结构应留在后端权威源；只有前端先行的临时定义可以短期写入 contract，并标注来源和替换时机。
 
-## 安装
+## 常用说法
 
-复制安装：
+安装和初始化：
 
-```powershell
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
-Copy-Item -Recurse -Force ".\skills\*" "$env:USERPROFILE\.agents\skills\"
-```
+- “把这个 Vue 项目接入 Ruyi。”
+- “快速开始接入。”
+- “完整迁移接入，先帮我蒸馏这些项目文档。”
 
-本地开发时也可以分别建立目录联接，避免复制后忘记同步：
+开发需求：
 
-```powershell
-cmd /c mklink /J "%USERPROFILE%\.agents\skills\using-ruyi" "D:\AIWorks\ruyi\skills\using-ruyi"
-cmd /c mklink /J "%USERPROFILE%\.agents\skills\ruyi-init" "D:\AIWorks\ruyi\skills\ruyi-init"
-```
+- “新增订单关键词搜索。”
+- “修复订单列表筛选后分页不重置的问题。”
+- “优化这个组件的渲染性能。”
+- “做一次小重构，保持行为不变。”
 
-其他阶段 skill 按同样方式链接。安装后重启 code agent。
+流程推进：
+
+- “继续。”
+- “这个 contract 可以。”
+- “按这个 plan 开始实现。”
+- “这个交付通过。”
+- “把这次经验沉淀一下。”
 
 ## 支持范围
 

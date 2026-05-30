@@ -41,6 +41,8 @@ description: Use when a project already contains .ruyi or .ruyirc but its Ruyi d
 - 本地按需资产：`tasks / spec-candidates`。
 - 已废弃目录：`explain / workspace / spec-archive / spec-patches`。
 - 旧 `frontend-baseline.md` 会拆分为 `development-baseline.md` 和 `coding-baseline.md` 后删除。
+  - 开发过程动作进入 `development-baseline.md`。
+  - 代码产物规则进入 `coding-baseline.md`。
 - 旧 `spec/references/shared/INDEX.md` 与 `spec/references/modules/INDEX.md` 会合并到 `.ruyi/spec/INDEX.md` 后删除。
 - 旧 explain 的审批状态会迁移到对应 test。
 

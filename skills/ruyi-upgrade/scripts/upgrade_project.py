@@ -39,20 +39,88 @@ SPEC_DIRS = (
     ".ruyi/tests",
 )
 PROCESS_KEYWORDS = (
-    "lint",
-    "build",
-    "test",
     "npm run",
+    "npm test",
     "pnpm",
     "yarn",
+    "pytest",
+    "vitest",
     "git",
     "commit",
     "fast-browser",
+    "run lint",
+    "run test",
+    "run build",
+    "before commit",
+    "pre-commit",
+    "ci",
+    "pipeline",
+    "执行",
+    "运行",
+    "命令",
+    "脚本",
+    "流程",
+    "提交前",
+    "开发前",
+    "开发后",
+    "交付前",
     "验证",
     "测试",
     "构建",
     "检查",
     "提交",
+)
+PROCESS_COMMAND_KEYWORDS = (
+    "npm run",
+    "npm test",
+    "pnpm",
+    "yarn",
+    "pytest",
+    "vitest",
+    "git ",
+    "fast-browser",
+    "run lint",
+    "run test",
+    "run build",
+    "执行",
+    "运行",
+    "命令",
+    "脚本",
+    "提交前",
+    "交付前",
+)
+CODING_KEYWORDS = (
+    "component",
+    "components",
+    "props",
+    "slots",
+    "emits",
+    "hook",
+    "hooks",
+    "store",
+    "state",
+    "service",
+    "api client",
+    "style",
+    "css",
+    "class",
+    "type",
+    "typescript",
+    "interface",
+    "函数",
+    "方法",
+    "组件",
+    "属性",
+    "插槽",
+    "事件",
+    "状态",
+    "样式",
+    "类型",
+    "接口封装",
+    "错误处理",
+    "命名",
+    "目录",
+    "文件结构",
 )
 BUSINESS_FACT_PATTERNS = (
     "business facts",
@@ -186,7 +254,10 @@ def classify_frontend_baseline(text: str) -> tuple[str, str]:
     coding_lines: list[str] = []
     for line in body.splitlines():
         lowered = line.lower()
-        if any(keyword in lowered or keyword in line for keyword in PROCESS_KEYWORDS):
+        is_process = any(keyword in lowered or keyword in line for keyword in PROCESS_KEYWORDS)
+        is_command_process = any(keyword in lowered or keyword in line for keyword in PROCESS_COMMAND_KEYWORDS)
+        is_coding = any(keyword in lowered or keyword in line for keyword in CODING_KEYWORDS)
+        if is_command_process or (is_process and not is_coding):
             process_lines.append(line)
         else:
             coding_lines.append(line)

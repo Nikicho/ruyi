@@ -14,6 +14,8 @@
 
 agent 需要读取项目规范时，必须先读 `.ruyi/spec/INDEX.md`，再按 INDEX 链接按需读取顶层 baseline、`references/shared/` 或 `references/modules/` 下的细分规范。
 
+只要请求可能修改源码，就必须先执行渐进式 spec 加载。这个规则不只属于 implement 阶段，也适用于 bugfix、重构、微重构、格式调整、文件架构调整、lint 修复等任何源码改动。
+
 禁止把 `references/shared/INDEX.md` 或 `references/modules/INDEX.md` 作为二级索引；schema v3 不创建、不维护这些文件。
 
 ## 3. 项目层文件
@@ -61,6 +63,25 @@ references/shared/table/
 - `testing-baseline.md`：测试策略、验收证据和失败回流规则。
 
 顶层 baseline 只保留最通用规则和索引摘要；模块级、组件级、接口级细则必须链接到 `references/shared/` 或 `references/modules/` 的具体文件。开发过程中不能只读 baseline 而忽略其链接的 references。
+
+## 5.1 渐进式加载规则
+
+代码改动前按写入边界加载，不全量读取：
+
+1. 先读 `.ruyi/spec/INDEX.md`。
+2. 总是读取 `development-baseline.md` 和 `coding-baseline.md` 的核心约束；涉及测试、验证、bugfix 时读取 `testing-baseline.md`。
+3. 根据 contract、plan、维护目标和写入边界读取相关 `references/modules/`。
+4. 涉及公共组件、组件 props/slots/events、组件封装、组件使用、Table、Form、Modal、Drawer、Button、Select 等 UI 基础能力时，读取相关 `references/shared/` 组件 spec。
+5. 涉及 API、权限、路由、错误处理、状态管理等跨模块能力时，读取相关 `references/shared/<主题>/`。
+6. 读取目标相关 `.ruyi/spec-candidates/`，只作为待确认补充信号，不能覆盖正式 spec。
+7. 如果 INDEX 没有直接列出相关 shared spec，但写入边界显示会碰公共组件或共享能力，先列对应 `references/shared/` 子目录，再读取最相关文件。
+
+禁止：
+
+- 一次性读取整个 `.ruyi/spec/`。
+- 只读 baseline 就改公共组件。
+- 只读模块 spec，不读被使用的 shared component spec。
+- 因为不是 implement 阶段就跳过 spec。
 
 ## 6. API 归位
 

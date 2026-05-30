@@ -17,6 +17,7 @@ INTENTS = (
     "init",
     "upgrade",
     "contract",
+    "contract-from-doc",
     "maintain",
     "plan",
     "implement",
@@ -88,6 +89,18 @@ def project_schema_version(project: Path) -> int:
     text = (project / ".ruyirc").read_text(encoding="utf-8")
     match = re.search(r"^schema_version:\s*(\d+)\s*$", text, re.MULTILINE)
     return int(match.group(1)) if match else 1
+
+
+def project_needs_upgrade(project: Path) -> bool:
+    if project_schema_version(project) < CURRENT_SCHEMA_VERSION:
+        return True
+    sentinels = (
+        project / ".ruyi" / "spec" / "frontend-baseline.md",
+        project / ".ruyi" / "spec" / "references" / "shared" / "INDEX.md",
+        project / ".ruyi" / "spec" / "references" / "modules" / "INDEX.md",
+        project / ".ruyi" / "explain",
+    )
+    return any(path.exists() for path in sentinels)
 
 
 def contract_path(project: Path, payload: dict[str, Any]) -> Path:
@@ -292,11 +305,11 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
             choices=["quick-start", "full-migration"],
         )
 
-    if project_schema_version(project) < CURRENT_SCHEMA_VERSION:
+    if project_needs_upgrade(project):
         return route(
             "upgrade",
             ["schema-upgrade-required"],
-            "项目 Ruyi schema 低于当前 skills 要求，先运行 ruyi-upgrade，再继续原请求。",
+            "项目 Ruyi 结构需要升级或规整，先运行 ruyi-upgrade，再继续原请求。",
         )
 
     validate_stage_payload(payload)
@@ -312,6 +325,14 @@ def route_request(project_path: str | Path, payload: dict[str, Any]) -> dict[str
 
     if intent == "spec-discover":
         return route("spec-discover", [], "进入 ruyi-spec-discover，从现有代码反推本地 spec candidates。")
+
+    if intent == "contract-from-doc":
+        return route(
+            "contract",
+            [],
+            "进入 ruyi-contract 文档转 contract 模式；以用户提供的已澄清文档为需求来源，不从代码重新总结需求。",
+            mode="contract-from-doc",
+        )
 
     if intent in ("init", "upgrade", "contract"):
         return route(intent, [], f"进入 {STAGE_SKILLS[intent]}。")

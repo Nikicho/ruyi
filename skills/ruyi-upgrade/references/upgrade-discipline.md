@@ -10,6 +10,9 @@
 - 更新 Ruyi 管理的本地目录 `.gitignore` 规则。
 - 创建 `.ruyi/spec/INDEX.md`。
 - 拆分旧 `frontend-baseline.md` 为 `development-baseline.md` 和 `coding-baseline.md`，并删除旧文件。
+  - `development-baseline.md` 只放开发过程动作，例如运行命令、验证步骤、提交前检查、CI/浏览器验证。
+  - `coding-baseline.md` 放代码产物规则，例如组件边界、props/slots/events、状态管理、样式、类型、目录结构、错误处理。
+  - 同一行同时出现组件/代码主题和“运行/执行/命令/提交前”等动作时，按动作性质进入 development；否则优先保留为 coding。
 - 合并旧 `references/shared/INDEX.md`、`references/modules/INDEX.md` 到 `.ruyi/spec/INDEX.md`，并删除旧二级 INDEX。
 - 将旧 explain 的审批状态迁移到对应 test。
 - 重建 `.ruyi/INDEX.md`。
@@ -21,7 +24,7 @@
 - 旧 `derived_from` 是否应改为同一 contract 的 `reopened`。
 - 旧 `conditionally-approved` 或 `rejected` 应落到什么新结论。
 - 从旧 spec 检出的业务事实是否已经完全可信。
-- 不明确的长期规范该进入 `development-baseline.md`、`coding-baseline.md` 还是 `open-questions.md`。
+- 无法按“过程动作 vs 代码产物规则”判断的长期规范该进入 `development-baseline.md`、`coding-baseline.md` 还是 `open-questions.md`。
 
 这些项目必须输出到 `needs_user_decision`，留给用户审视。
 

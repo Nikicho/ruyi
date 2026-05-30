@@ -11,6 +11,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 修复类需求定义。
 - 重构目标定义。
 - 已有 contract 的补充和修订。
+- 用户提供已澄清设计文档、PRD、技术设计或其他 agent 生成的非 contract 文档，需要转成 Ruyi contract。
 - 输出自然语言测试用例（contract 阶段必产出物，与验收标准并列权重）。
 - 判断一个 contract 是否需要进入 plan 拆分。
 
@@ -22,6 +23,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 没有完整自然语言测试用例时，contract 不能标 `confirmed`。
 - 没有验收标准或测试用例时，`confirmed` contract 不进入 plan。
 - 语义变化时新建日期文件；非语义修订时原地修改当前文件。
+- 文档转 contract 模式下，用户提供的文档是需求来源；禁止跳过文档、改为从代码自行总结一个新 contract。
 
 ## 3. 执行原则
 
@@ -32,6 +34,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 - 修复类需求必要时先遵守 `references/debugging-discipline.md`。
 - `fix / refactor` 是 contract 的需求类型，不是独立 Ruyi skill。
 - 需要读取项目规范时，先读 `.ruyi/spec/INDEX.md`，再按索引读取相关 spec；baseline contract 只作为当前业务事实背景，不替代本次变更 contract。
+- 用户提供的已澄清文档不是“参考资料”，而是 contract 的上游输入。代码观察只能用于确认模块命名、现状差异和影响范围，不能替换文档中的需求定义。
 
 ## 4. 执行步骤
 
@@ -40,19 +43,42 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 3. 读取 `references/contract-discipline.md`。
 4. 读取 `.ruyi/spec/INDEX.md`，并按索引读取本次相关 spec 或 baseline contract。
 5. 如果是修复类需求，先读取并执行 `references/debugging-discipline.md`。
-6. 判断模块和功能命名，优先贴近项目现有模块目录。
-7. 澄清业务目标、用户故事、范围边界、验收标准。
-8. 判断本次是否涉及接口；涉及时收集 `## 接口范围` 信息，只记录接口路径、方法、类型、来源和必要临时定义，不抄完整 API 文档。
-9. 基于验收标准 brainstorm 自然语言测试用例。每条测试用例必须：
+6. 如果用户提供已澄清非 contract 文档，先进入“文档转 contract 模式”。
+7. 判断模块和功能命名，优先贴近项目现有模块目录。
+8. 澄清业务目标、用户故事、范围边界、验收标准。
+9. 判断本次是否涉及接口；涉及时收集 `## 接口范围` 信息，只记录接口路径、方法、类型、来源和必要临时定义，不抄完整 API 文档。
+10. 基于验收标准 brainstorm 自然语言测试用例。每条测试用例必须：
    - 能映射回至少一条验收标准。
    - 描述具体场景，不是抽象规则。
    - 覆盖正常路径、边界、异常三类；tiny 可按实际简化但不能为空。
    一次只问一个测试场景缺口，不一次性猜完。
-10. 判断是新建日期 contract，还是修订当前 contract。
-11. 用户确认后，按路径写入或更新 contract。
-12. 如 contract 需要拆分或需要实施设计，引导进入 `ruyi-plan`。
+11. 判断是新建日期 contract，还是修订当前 contract。
+12. 用户确认后，按路径写入或更新 contract。
+13. 如 contract 需要拆分或需要实施设计，引导进入 `ruyi-plan`。
 
-## 5. 修订模式
+## 5. 文档转 contract 模式
+
+触发条件：
+
+- 用户明确提供“已经澄清过”的设计文档、PRD、技术设计、需求说明、其它 agent 产出的方案文档。
+- 用户表达“按这个文档做 / 根据这个设计接入 Ruyi / 把这份文档变成 contract”。
+
+执行顺序：
+
+1. 先读取用户提供的文档正文或文件路径。
+2. 从文档中抽取业务目标、用户故事、范围边界、验收标准、接口范围、自然语言测试用例缺口。
+3. 只在需要定位模块、核对现状或识别影响范围时读取代码；代码观察写入“现状/影响范围”，不得覆盖文档需求。
+4. 若文档已经足够明确，只做结构化转换和少量缺口确认；不要重新发起一轮从零需求澄清。
+5. 若文档缺失验收标准或测试用例，只询问缺口，不自行从代码推断。
+6. contract 的 `source` 或正文应标明来源为用户提供文档。
+
+禁止：
+
+- 看见非 contract 文档后忽略它，转而从代码总结一个 contract。
+- 把代码现状当成需求目标。
+- 把技术设计细节塞进 contract 的实现方案；需要实施设计时引导到 plan。
+
+## 6. 修订模式
 
 进入修订模式前，必须由 `using-ruyi` 完成 A/B/C/D 分类并获得用户确认。
 
@@ -65,7 +91,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 3. 未确认分类时，不允许落盘修订。
 4. 修订后必须刷新或提示刷新 `.ruyi/INDEX.md`。
 
-## 6. 脚本调用
+## 7. 脚本调用
 
 最小可用落盘脚本：
 
@@ -110,7 +136,7 @@ python scripts/reopen_delivery.py --project <project-root> --module <module-slug
 
 该动作只更新原交付文件的当前状态并记录返工原因，不写 `derived_from`。
 
-## 7. 产物要求
+## 8. 产物要求
 
 产物路径：
 
@@ -120,7 +146,7 @@ contracts/<module>/<feature>/<YYYY-MM-DD>.md
 
 正文结构遵守 `references/contract-schema.md`。
 
-## 8. 必读参考
+## 9. 必读参考
 
 - `references/main-flow.md`
 - `references/contract-schema.md`

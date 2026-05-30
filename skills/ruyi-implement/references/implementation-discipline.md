@@ -15,6 +15,8 @@
 - 轻量维护模式不要求 contract / plan / task，但必须由 `using-ruyi` 明确路由进入。
 - 轻量维护模式必须确认不改变业务行为；如果发现用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准变化，必须返回 contract。
 - 没有读取相关 project spec，不进入正式实现。
+- 没有按写入边界渐进式读取相关 shared spec，不进入任何源码改动。
+- 涉及公共组件、组件使用或组件封装时，没有读取 `references/shared/` 下相关组件 spec，不开始编码。
 - 实现前没有明确验证点，不开始编码。
 - 能写自动化测试的场景，应优先补测试或先定义可执行验证方式。
 - 如果发现 contract 不足，返回 contract 阶段补充，不在代码里隐式扩大范围。
@@ -27,7 +29,7 @@
 
 1. 读取 contract。
 2. 读取 plan 和 task。
-3. 读取 project spec 和可用 team spec。
+3. 读取 project spec、shared component spec 和可用 team spec。
 4. 按 plan 判断影响范围和相关模块。
 5. 对照 plan 中的测试策略确认验证点。
 6. 实现最小必要改动。
@@ -39,15 +41,30 @@
 
 1. 明确维护目标和写入边界。
 2. 确认不改变业务行为。
-3. 读取相关 project spec 和可用 team spec。
+3. 读取相关 project spec、shared component spec 和可用 team spec。
 4. 实施最小代码优化或代码微重构。
 5. 运行可行的局部验证。
 6. 完成代码自检和 review 反馈处理。
 7. 判断是否发现可沉淀规范；如有，只提示用户后续单独进入 spec-evolve，不自动生成 spec-candidate。
 
-## 4. 验证点要求
+## 4. Spec 加载要求
 
-验证点必须来自 contract 的验收标准和 plan 的测试策略。
+任何源码改动前都必须按写入边界加载 spec，包括功能实现、bugfix、重构、微重构、格式调整、文件架构调整、lint 修复。
+
+最小顺序：
+
+1. 读取 `.ruyi/spec/INDEX.md`。
+2. 读取 `development-baseline.md` 和 `coding-baseline.md`；涉及测试或 bugfix 时读取 `testing-baseline.md`。
+3. 根据 contract、plan、维护目标和写入边界读取相关 `references/modules/`。
+4. 若涉及公共组件、组件 props/slots/events、组件封装或组件使用，读取相关 `references/shared/` 组件 spec。
+5. 若涉及 API、权限、路由、错误处理、状态管理，读取相关 `references/shared/` 主题 spec。
+6. 检查目标相关 `.ruyi/spec-candidates/`，仅作为待确认补充信号。
+
+如果无法从 INDEX 定位 shared spec，但写入边界显示会碰公共组件或共享能力，先列对应 shared 目录，再读取最相关文件。禁止一次性加载整个 spec 树。
+
+## 5. 验证点要求
+
+验证点必须来自 contract 的验收标准和 plan 的测试策略；轻量维护模式的验证点来自维护目标、写入边界和相关 spec。
 
 一个有效验证点应该说明：
 
@@ -56,7 +73,7 @@
 - 使用自动化测试、命令、页面操作还是人工观察
 - 如果当前无法验证，原因是什么
 
-## 5. 反模式
+## 6. 反模式
 
 | 反模式 | 正确处理 |
 | --- | --- |
@@ -69,8 +86,10 @@
 | 不做代码自检就交付 | 先完成 implement 阶段自检和优化 |
 | 轻量维护时发现行为变化还继续改 | 停止并返回 contract |
 | 维护结束后直接写 spec-candidate | 只提示可沉淀规范，是否沉淀由后续流程决定 |
+| 改公共组件但只读模块 spec | 读取对应 shared component spec 后再改 |
+| 认为不是 implement 阶段就不用 spec | 任何源码改动都先执行 spec 门禁 |
 
-## 6. 具体反模式（Anti-patterns）
+## 7. 具体反模式（Anti-patterns）
 
 ### ❌ task 只写 OrderList.vue，我顺手优化 OrderItem.vue
 
@@ -102,7 +121,7 @@
 
 **正确做法**：记录实际命令、结果、warning 内容和是否影响验收。
 
-## 7. 检查清单
+## 8. 检查清单
 
 编码前检查：
 
@@ -110,6 +129,8 @@
 - 是否有明确 plan？
 - 如果是轻量维护模式，是否明确维护目标、写入边界，并确认不改变业务行为？
 - 是否读取了相关 spec？
+- 是否读取了写入边界相关的 shared spec？
+- 如果涉及组件，是否读取了组件 spec？
 - 是否知道本次影响哪些模块？
 - 是否明确至少一个验证点？
 - 是否判断过能否补自动化测试？

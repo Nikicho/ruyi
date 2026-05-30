@@ -1,6 +1,6 @@
 ---
 name: using-ruyi
-description: Frontend project Ruyi pipeline router. Use whenever the user asks to add a feature, fix a bug, refactor, optimize code, implement, test, approve a delivery, distill knowledge, infer specs from code, amend an ongoing requirement, or continue ongoing work in a frontend project. Common Chinese triggers: "继续"、"新增"、"修复"、"重构"、"代码优化"、"代码微重构"、"代码反推spec"、"梳理组件规范"、"接入Ruyi"、"通过"、"沉淀"、"再加"、"改一下". Common English triggers: "continue", "add feature", "fix", "refactor", "optimize", "infer spec", "implement", "test", "approve", "distill", "also add", "change". MUST load before any code edit in projects containing .ruyi/ or .ruyirc.
+description: Frontend project Ruyi pipeline router. Use whenever the user asks to add a feature, fix a bug, refactor, optimize code, implement, test, approve a delivery, distill knowledge, infer specs from code, convert a design document to a contract, amend an ongoing requirement, or continue ongoing work in a frontend project. Common Chinese triggers: "继续"、"新增"、"修复"、"重构"、"设计文档"、"代码优化"、"代码微重构"、"代码反推spec"、"梳理组件规范"、"接入Ruyi"、"通过"、"沉淀"、"再加"、"改一下". Common English triggers: "continue", "add feature", "fix", "refactor", "design doc", "PRD", "optimize", "infer spec", "implement", "test", "approve", "distill", "also add", "change". MUST load before any code edit in projects containing .ruyi/ or .ruyirc.
 ---
 
 # Using Ruyi
@@ -10,7 +10,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 当本 skill 被加载时，立即按顺序执行：
 
 1. 检查当前工作目录或用户指定项目根目录是否存在 `.ruyi/` 或 `.ruyirc`。
-2. 若存在：声明 `Ruyi 主流程已激活`；先读取 `.ruyirc` 的 `schema_version`。低于当前 schema 时立即路由到 `ruyi-upgrade`，升级前不得继续阶段流转；schema 当前时再读取 `.ruyi/INDEX.md`。**禁止读取 contract / plan / test 文件正文**。
+2. 若存在：声明 `Ruyi 主流程已激活`；先读取 `.ruyirc` 的 `schema_version` 和关键目录结构。低于当前 schema、缺少 `schema_version`、或发现旧结构残留影响当前流程时，立即路由到 `ruyi-upgrade`，升级前不得继续阶段流转；结构当前时再读取 `.ruyi/INDEX.md`。**禁止读取 contract / plan / test 文件正文**。
    - INDEX 不存在时，仅扫描 `contracts/` 与 `tests/` 的目录名，不读文件正文。
    - 列出最多 5 条活动需求候选时，只使用 INDEX 的元信息和一句话业务目标。
 3. 若不存在：判断用户意图是否为初始化；不是初始化则退出 Ruyi 上下文。若是初始化，必须先让用户选择“快速开始”或“完整迁移”，未选择前不得运行 `init_write.py` 或写入 `.ruyi/`。
@@ -19,6 +19,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
    - 不允许读取多个 feature 的 contract / plan / test 正文。
    - 只有路由确定到具体 feature 后，才读取该 feature 的最新 contract；成熟项目如果存在同 module 的 baseline contract，可同时读取该 baseline 作为业务背景。
    - 跨 feature 引用必须由用户明确指定，不靠扫描自动发现。
+6. 若用户请求可能导致源码变更，无论当前阶段是否是 implement，都必须执行“代码改动前 Spec 门禁”；未完成渐进式 spec 加载前不得改代码。
 
 如果你跳过这一步直接编辑代码、运行命令或生成阶段产物，你违反了 Ruyi 主流程。停止当前动作，重新进入 Ritual。
 
@@ -37,6 +38,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 - 项目只能通过 `.ruyi/project-actions.md` 追加项目特有操作，不能改写 Ruyi 主流程。
 - 通用工程纪律由 Ruyi references 内化提供，Ruyi 负责阶段门禁、文档对象和知识沉淀。
 - 如果同时安装 Superpowers，Superpowers 只能作为通用方法来源，不能覆盖 Ruyi 的阶段门禁。
+- 只要会改源码，spec 就是强制约束层；阶段不同只影响需要的产物，不影响 spec 读取门禁。
 
 ## 3. 入口判断
 
@@ -44,7 +46,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 2. 若存在，优先使用 Ruyi 主流程。
 3. 判断当前项目是否已初始化。
 4. 未初始化时，只能进入 `ruyi-init`，并且必须先完成接入方式选择。
-5. 已初始化时，先检查 `schema_version`；低于当前版本时先进入 `ruyi-upgrade`，完成后再处理原意图。
+5. 已初始化时，先检查 `schema_version` 和结构健康度；缺少版本、低于当前版本、存在需要规整的旧入口时，先进入 `ruyi-upgrade`，完成后再处理原意图。
 6. 如果用户只说“继续”，先定位当前活动需求；无法唯一定位时请用户确认。
 7. 如果能识别 `module / feature / date`，优先按本文件“路由判定表”推断下一阶段；可选使用 `scripts/route_request.py` 复核。
 8. 路由到对应子 skill，并要求子 skill 执行自身门禁。
@@ -64,6 +66,7 @@ description: Frontend project Ruyi pipeline router. Use whenever the user asks t
 | --- | --- |
 | 初始化已有前端项目 | `../ruyi-init/SKILL.md` |
 | 升级已有 Ruyi 项目结构 | `../ruyi-upgrade/SKILL.md` |
+| 用户提供已澄清设计文档、需求文档、外部 agent 产物，需要转为 Ruyi contract | `../ruyi-contract/SKILL.md`（文档转 contract 模式） |
 | 定义新功能、修复、业务重构目标 | `../ruyi-contract/SKILL.md` |
 | 代码优化、代码微重构、无行为变化维护 | `../ruyi-implement/SKILL.md`（轻量维护模式） |
 | 根据已确认需求制定开发计划 | `../ruyi-plan/SKILL.md` |
@@ -83,6 +86,7 @@ agent 负责把用户自然语言映射为下列 intent：
 | `init` | 初始化、接入 Ruyi、创建 `.ruyi` |
 | `upgrade` | 更新 Ruyi 后规整已有 `.ruyi` 文档结构 |
 | `contract` | 新功能、修复、业务重构、需求澄清、验收标准、自然语言测试用例 |
+| `contract-from-doc` | 用户提供已澄清设计文档、需求文档、PRD、技术设计或其它 agent 生成的非 contract 文档 |
 | `maintain` | 代码优化、代码微重构、抽函数、拆组件、去重复、类型收紧、lint 整理，且不改变业务行为 |
 | `plan` | 已有 contract，要制定测试策略、开发计划或拆 task |
 | `implement` | 已有 plan，要开始编码、执行 task 或做代码自检 |
@@ -120,7 +124,8 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 | 条件 | 下一阶段 | 标准处理 |
 | --- | --- | --- |
 | 项目缺少 `.ruyi/` 或 `.ruyirc` | `ruyi-init` | 先询问接入方式：快速开始 / 完整迁移；未选择前不得写入 `.ruyi/` |
-| 项目 `schema_version` 低于当前版本 | `ruyi-upgrade` | 先机械迁移结构；废弃目录删除另行确认 |
+| 项目缺少 `schema_version`、`schema_version` 低于当前版本、或检测到旧结构需要规整 | `ruyi-upgrade` | 先机械迁移结构；废弃目录删除另行确认 |
+| 用户提供已澄清非 contract 文档，并要求按它开发 | `ruyi-contract` | 进入文档转 contract 模式；以文档为需求来源，不从代码重新总结需求 |
 | 代码优化 / 代码微重构，且不改变用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准 | `ruyi-implement` | 进入轻量维护模式，不要求 contract / plan / task |
 | 缺少 contract | `ruyi-contract` | 拒绝 plan/implement/test/approve/spec-evolve |
 | contract `status` 不是 `confirmed` | `ruyi-contract` | 要求先确认需求 |
@@ -165,6 +170,30 @@ agent 必须按下列顺序判断，命中后立即停止继续向后判断：
 3. 若确认只是维护型代码变更，进入 `ruyi-implement` 轻量维护模式。
 4. 轻量维护模式不要求 contract / plan / task，但必须有维护目标、写入边界、自检和验证结果。
 5. 收口时只识别是否存在可沉淀规范；如有，提示用户后续单独进入 spec-evolve，不自动生成 spec-candidate。
+
+### code-change spec 门禁
+
+触发范围：任何会修改源码的请求，包括功能开发、bugfix、实现 plan、代码优化、重构、微重构、格式调整、文件架构调整、组件迁移、类型收紧、lint 修复。
+
+执行：
+
+1. 先读 `.ruyi/spec/INDEX.md`，只用索引判断可能相关的 spec，不全量读取。
+2. 按写入边界渐进式加载：
+   - 总是读取 `development-baseline.md` 和 `coding-baseline.md` 的索引摘要或核心规则。
+   - 涉及测试、验证、bugfix 时读取 `testing-baseline.md`。
+   - 涉及某个模块、页面、路由、service、store、hook 时读取 `references/modules/<相关目录>/` 下被 INDEX 命中的文件。
+   - 涉及公共组件、组件封装、组件使用、props、slots、table、form、modal、drawer 等 UI 组件时，读取 `references/shared/components/` 或对应组件目录下被 INDEX 命中的文件。
+   - 涉及跨模块 API、错误处理、权限、路由、状态管理时，读取 `references/shared/<相关主题>/` 下被 INDEX 命中的文件。
+3. 读取同目标相关的本地 `.ruyi/spec-candidates/`，仅作为待确认补充信号，不能覆盖正式 spec。
+4. 如果 INDEX 没有列出明显相关 spec，但写入边界显示会碰公共组件或共享能力，必须检查对应 `references/shared/` 目录列表后再决定是否读取具体文件。
+5. 读取到足够约束后再改代码；如果仍无法判断适用规范，先向用户说明缺口，不靠猜测继续。
+
+禁止：
+
+- 只读取顶层 baseline 后就改公共组件。
+- 因为不是 implement 阶段就跳过 spec。
+- 一次性读取整个 `.ruyi/spec/`。
+- 公共组件改动时忽略 `references/shared/`。
 
 ### amend 意图
 

@@ -1,4 +1,4 @@
-﻿# Implementation Discipline
+# Implementation Discipline
 
 ## 1. 目标
 
@@ -28,7 +28,7 @@
 ## 3. 最小流程
 
 1. 读取 contract。
-2. 读取 plan 和 task。
+2. 读取 plan 的方案、文件架构、spec 约束、task 标题和验证策略；需要详细步骤时再生成本地 task。
 3. 读取 project spec、shared component spec 和可用 team spec。
 4. 按 plan 判断影响范围和相关模块。
 5. 对照 plan 中的测试策略确认验证点。
@@ -36,6 +36,8 @@
 7. 运行局部验证。
 8. 完成代码自检、review 反馈处理和必要优化。
 9. 交给 test 阶段完成验证收口。
+
+plan 中的 `## Task 拆分` 只提供实际实施步骤标题。implement 阶段应把这些标题展开到本地 task checkpoint 中，详细记录修改顺序、完成条件、进度和 compact 恢复点；这些本地 task 不提交 git。
 
 轻量维护模式最小流程：
 

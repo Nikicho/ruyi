@@ -26,10 +26,10 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 ## 3. 执行原则
 
 - 先读取 `.ruyi/spec/INDEX.md`，再按写入边界渐进式读取相关 project spec、shared component spec 与可用 team spec。
-- 以 contract 为需求边界，以 plan 为实施边界。
+- 以 contract 为需求边界，以 plan 的方案、文件架构、spec 约束、task 标题和验证策略为实施边界。
 - 轻量维护模式以维护目标和写入边界为实施边界，以现有 spec 为约束来源。
 - `tiny` contract 可以跳过 plan/checkpoint，但如果实际改动超过 3 个文件、新增 hook/组件或出现业务规则变化，必须升级为 `standard` 并返回 `ruyi-plan`。
-- 非 tiny 实现仅在多 task 或预计跨轮次/文件组工作时，于首次修改源码前按需创建 `.ruyi/tasks/` checkpoint；它是本地恢复状态，不提交 git，也不作为 formal test 门禁。
+- 非 tiny 实现应先读取 plan 的 `## Task 拆分` 标题；需要详细步骤时，于首次修改源码前生成 `.ruyi/tasks/` checkpoint，把标题展开为本地执行步骤。checkpoint 是本地恢复状态，不提交 git，也不作为 formal test 门禁。
 - 轻量维护模式如果发现用户可感知行为、业务规则、接口语义、状态语义、权限、路由或验收标准变化，必须停止并返回 `ruyi-contract`。
 - 实现阶段遵守 `references/implementation-discipline.md`。
 - 代码自检和 review 反馈处理遵守 `references/code-review-discipline.md`。
@@ -42,7 +42,7 @@ description: Routed by using-ruyi. Use only after using-ruyi has determined the 
 2. 读取 contract 和 plan。
 3. 执行渐进式 spec 加载：读取 `.ruyi/spec/INDEX.md`，再按计划写入边界读取相关 project spec、shared component spec、team spec 和本地相关 spec-candidates。
 4. 读取 `references/implementation-discipline.md` 和 `references/code-review-discipline.md`。
-5. 判断本次实现是否需要本地 checkpoint；需要时在首次修改源码前创建，并在完成文件组、运行验证或准备结束回复前更新。
+5. 根据 plan 的 `## Task 拆分` 标题判断本次实现是否需要本地 checkpoint；需要时在首次修改源码前创建，并在完成文件组、运行验证或准备结束回复前更新。
 6. 实现 plan 范围内的最小必要改动。
 7. 运行局部验证。
 8. 完成代码自检、review 反馈处理和必要优化。

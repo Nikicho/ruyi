@@ -13,7 +13,7 @@ from typing import Any
 PLAN_STATUSES = ("draft", "confirmed", "blocked")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*$")
-TASK_REQUIRED_MARKERS = ("目标", "范围", "写入边界", "完成条件")
+OLD_TASK_DETAIL_MARKERS = ("目标：", "范围：", "写入边界", "完成条件", "步骤：")
 
 
 def validate_slug(name: str, value: str) -> None:
@@ -37,13 +37,11 @@ def validate_payload(payload: dict[str, Any]) -> None:
         "date",
         "title",
         "status",
-        "goal",
-        "inputs",
+        "solution",
+        "architecture",
+        "spec_constraints",
         "test_strategy",
         "tasks",
-        "sequence",
-        "write_scope",
-        "completion",
     )
     missing = [key for key in required if not payload.get(key)]
     if missing:
@@ -63,15 +61,13 @@ def validate_payload(payload: dict[str, Any]) -> None:
     invalid_tasks = [
         item
         for item in as_list(payload["tasks"])
-        if not all(marker in item for marker in TASK_REQUIRED_MARKERS)
+        if any(marker in item for marker in OLD_TASK_DETAIL_MARKERS)
     ]
     if invalid_tasks:
-        raise ValueError("each task must include 目标、范围、写入边界、完成条件")
-    if not as_list(payload["write_scope"]):
-        raise ValueError("write_scope must include at least one item")
+        raise ValueError("task items must be title-only; detailed steps belong in local task checkpoints")
 
 
-def contract_requires_api_integration(path: Path) -> bool:
+def contract_requires_data_interface(path: Path) -> bool:
     if not path.is_file():
         return False
     text = path.read_text(encoding="utf-8")
@@ -152,10 +148,17 @@ def numbered_list(items: list[str]) -> str:
     return "\n".join(f"{index}. {item}" for index, item in enumerate(items, start=1))
 
 
+def plain_block(items: list[str]) -> str:
+    return "\n".join(items)
+
+
 def render_plan(payload: dict[str, Any]) -> str:
     contract = f".ruyi/contracts/{payload['module']}/{payload['feature']}/{payload['date']}.md"
-    risks = as_list(payload.get("risks")) or ["暂无。"]
-    api_integration = as_list(payload.get("api_integration")) or ["本次不涉及接口对接。"]
+    data_interface = as_list(payload.get("data_interface")) or ["本次不涉及接口变化。"]
+    unresolved = as_list(payload.get("unresolved"))
+    unresolved_section = ""
+    if unresolved:
+        unresolved_section = f"\n\n## 未决项\n\n{bullet_list(unresolved)}"
 
     return f"""---
 status: {payload["status"]}
@@ -167,41 +170,31 @@ date: {payload["date"]}
 
 # Plan：{payload["title"]}
 
-## 实施目标
+## 方案概述
 
-{payload["goal"]}
+{plain_block(as_list(payload["solution"]))}
 
-## 输入依据
+## 文件/模块架构
 
-{bullet_list(as_list(payload["inputs"]))}
+```text
+{plain_block(as_list(payload["architecture"]))}
+```
 
-## 测试策略
+## 接口与数据
 
-{bullet_list(as_list(payload["test_strategy"]))}
+{bullet_list(data_interface)}
+
+## Spec 约束
+
+{bullet_list(as_list(payload["spec_constraints"]))}
 
 ## Task 拆分
 
-{bullet_list(as_list(payload["tasks"]))}
+{numbered_list(as_list(payload["tasks"]))}
 
-## 接口对接
+## 验证策略
 
-{bullet_list(api_integration)}
-
-## 实施顺序
-
-{numbered_list(as_list(payload["sequence"]))}
-
-## 写入范围
-
-{bullet_list(as_list(payload["write_scope"]))}
-
-## 依赖与风险
-
-{bullet_list(risks)}
-
-## 完成条件
-
-{bullet_list(as_list(payload["completion"]))}
+{bullet_list(as_list(payload["test_strategy"]))}{unresolved_section}
 """
 
 
@@ -236,11 +229,11 @@ def create_plan(project_path: str | Path, payload: dict[str, Any]) -> dict[str, 
             "path": None,
             "contract": str(contract),
         }
-    if contract_requires_api_integration(contract) and not as_list(payload.get("api_integration")):
+    if contract_requires_data_interface(contract) and not as_list(payload.get("data_interface")):
         return {
             "created": False,
-            "reason": "api-integration-required",
-            "message": "contract 存在接口范围，plan 必须包含接口对接策略。",
+            "reason": "data-interface-required",
+            "message": "contract 存在接口范围，plan 必须包含接口与数据判断。",
             "path": None,
             "contract": str(contract),
         }
@@ -287,15 +280,13 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
     parser.add_argument("--date", required=True, help="Contract date, YYYY-MM-DD")
     parser.add_argument("--title", required=True, help="Plan display title")
     parser.add_argument("--status", default="draft", choices=PLAN_STATUSES, help="Plan status")
-    parser.add_argument("--goal", required=True, help="Implementation goal")
-    parser.add_argument("--input", action="append", required=True, help="Plan input basis")
+    parser.add_argument("--solution", action="append", required=True, help="Architecture direction and key tradeoff")
+    parser.add_argument("--architecture", action="append", required=True, help="File/module structure line")
+    parser.add_argument("--data-interface", action="append", default=[], help="Minimal interface and data decision")
+    parser.add_argument("--spec", action="append", required=True, help="Required spec with short label")
     parser.add_argument("--test-strategy", action="append", required=True, help="Test strategy item")
-    parser.add_argument("--api-integration", action="append", default=[], help="API integration strategy item")
-    parser.add_argument("--task", action="append", required=True, help="Task breakdown item")
-    parser.add_argument("--sequence", action="append", required=True, help="Implementation sequence item")
-    parser.add_argument("--write-scope", action="append", required=True, help="Write scope item")
-    parser.add_argument("--risk", action="append", default=[], help="Dependency or risk")
-    parser.add_argument("--completion", action="append", required=True, help="Completion criterion")
+    parser.add_argument("--task", action="append", required=True, help="Task title only")
+    parser.add_argument("--unresolved", action="append", default=[], help="Blocking unresolved item")
     args = parser.parse_args(argv)
 
     payload = {
@@ -304,15 +295,13 @@ def main(argv: list[str] | None = None, *, emit: bool = True) -> str:
         "date": args.date,
         "title": args.title,
         "status": args.status,
-        "goal": args.goal,
-        "inputs": args.input,
+        "solution": args.solution,
+        "architecture": args.architecture,
+        "data_interface": args.data_interface,
+        "spec_constraints": args.spec,
         "test_strategy": args.test_strategy,
-        "api_integration": args.api_integration,
         "tasks": args.task,
-        "sequence": args.sequence,
-        "write_scope": args.write_scope,
-        "risks": args.risk,
-        "completion": args.completion,
+        "unresolved": args.unresolved,
     }
     output = json.dumps(create_plan(args.project, payload), ensure_ascii=False, indent=2)
     if emit:
